@@ -31,7 +31,7 @@ from datetime import datetime
 # ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="🏥 AI Disease Diagnosis", page_icon="🏥", layout="wide")
 
-# ---------- LOAD MODEL ----------
+# ---------- LOAD MODEL (from root directory, NOT models/) ----------
 @st.cache_resource
 def load_model():
     model = joblib.load('model.pkl')
