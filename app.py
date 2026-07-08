@@ -38,7 +38,7 @@ def load_model():
     scaler = joblib.load('scaler.pkl')
     encoder = joblib.load('encoder.pkl')
     features = joblib.load('features.pkl')
-    diseases = joblib.load('diseases.pkl')
+    diseases = joblib.load('diseases.pkl')   # <-- THIS LINE WAS MISSING
     return model, scaler, encoder, features, diseases
 
 model, scaler, encoder, features, diseases = load_model()
