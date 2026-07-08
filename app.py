@@ -1,22 +1,49 @@
+import subprocess
+import sys
+import os
+
+# ---- Force install the exact scikit-learn version used in training ----
+SKLEARN_VERSION = '1.6.1'
+
+try:
+    import sklearn
+    if sklearn.__version__ != SKLEARN_VERSION:
+        print(f"Installing scikit-learn=={SKLEARN_VERSION}...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", f"scikit-learn=={SKLEARN_VERSION}", "-q"])
+        import sklearn
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", f"scikit-learn=={SKLEARN_VERSION}", "-q"])
+    import sklearn
+
+# ---- Now install joblib if missing ----
+try:
+    import joblib
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "joblib", "-q"])
+    import joblib
+
+# ---- Import rest ----
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 from datetime import datetime
 
+# ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="🏥 AI Disease Diagnosis", page_icon="🏥", layout="wide")
 
+# ---------- LOAD MODEL ----------
 @st.cache_resource
 def load_model():
-    model = joblib.load('models/model.pkl')
-    scaler = joblib.load('models/scaler.pkl')
-    encoder = joblib.load('models/encoder.pkl')
-    features = joblib.load('models/features.pkl')
-    diseases = joblib.load('models/diseases.pkl')
+    model = joblib.load('model.pkl')
+    scaler = joblib.load('scaler.pkl')
+    encoder = joblib.load('encoder.pkl')
+    features = joblib.load('features.pkl')
+    diseases = joblib.load('diseases.pkl')
     return model, scaler, encoder, features, diseases
 
 model, scaler, encoder, features, diseases = load_model()
 
+# ---------- SIDEBAR NAVIGATION ----------
 with st.sidebar:
     st.markdown("### 🏥 Navigation")
     page = st.radio("", ["🏠 Home", "🩺 Disease Prediction", "📄 Project Report", "ℹ️ About"])
@@ -24,6 +51,7 @@ with st.sidebar:
     st.markdown(f"**Diseases:** {len(diseases)}")
     st.markdown(f"**Symptoms:** {len(features)}")
 
+# ---------- HOME ----------
 if page == "🏠 Home":
     st.title("🏥 AI Disease Diagnosis System")
     st.markdown("""
@@ -35,6 +63,7 @@ if page == "🏠 Home":
     """)
     st.success("✅ Model loaded successfully. Ready for prediction!")
 
+# ---------- DISEASE PREDICTION ----------
 elif page == "🩺 Disease Prediction":
     st.title("🩺 Disease Prediction")
     st.write("Select all symptoms that apply:")
@@ -43,7 +72,6 @@ elif page == "🩺 Disease Prediction":
     cols = st.columns(4)
     for i, sym in enumerate(features):
         col = cols[i % 4]
-        # Display symptom name nicely (remove underscores)
         display_name = sym.replace('_', ' ').title()
         if col.checkbox(display_name, key=sym):
             selected_symptoms.append(sym)
@@ -53,7 +81,6 @@ elif page == "🩺 Disease Prediction":
             st.warning("Please select at least one symptom.")
         else:
             with st.spinner("Analyzing..."):
-                # Build binary vector
                 input_vec = np.zeros(len(features))
                 for sym in selected_symptoms:
                     if sym in features:
@@ -83,7 +110,6 @@ elif page == "🩺 Disease Prediction":
                     else:
                         st.success("🟢 Low Risk - Take rest and stay hydrated.")
 
-                # Emergency detection – you can add more symptoms as needed
                 emergency = ['chest_pain', 'shortness_breath', 'fainting', 'seizures']
                 if any(s in emergency for s in selected_symptoms):
                     st.error("🚨 Emergency symptoms detected! Seek immediate medical attention.")
@@ -106,6 +132,7 @@ Symptoms: {', '.join(selected_symptoms)}
 """
                 st.download_button("📄 Download Report", report, file_name=f"diagnosis_{datetime.now().strftime('%Y%m%d')}.txt", mime="text/plain")
 
+# ---------- PROJECT REPORT ----------
 elif page == "📄 Project Report":
     st.title("📄 Project Report")
     col1, col2, col3 = st.columns(3)
@@ -139,6 +166,7 @@ elif page == "📄 Project Report":
     **Email:** thamizhmathi477@gmail.com
     """)
 
+# ---------- ABOUT ----------
 else:
     st.title("ℹ️ About")
     st.markdown("""
@@ -147,4 +175,3 @@ else:
     This is an educational project for preliminary diagnosis only.  
     **Always consult a healthcare professional.**
     """)
-print("✅ app.py created.")
