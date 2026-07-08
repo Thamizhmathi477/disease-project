@@ -9,40 +9,23 @@ st.set_page_config(
     page_title="🏥 AI Disease Diagnosis",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Hide sidebar by default
 )
 
 # ---------- CUSTOM CSS FOR BETTER VISIBILITY ----------
 st.markdown("""
 <style>
-    /* Main app background */
     .stApp {
         background-color: #f8f9fa;
     }
-    
-    /* Headers */
     h1, h2, h3, h4, h5, h6 {
         color: #0D47A1 !important;
         font-weight: 600 !important;
     }
-    
-    /* Paragraph text */
     p, li, .stMarkdown {
         font-size: 16px !important;
         color: #1a1a2e !important;
     }
-    
-    /* Sidebar */
-    .css-1d391kg, .css-163i3l4 {
-        background-color: #0D47A1 !important;
-        color: white !important;
-    }
-    
-    .css-1d391kg .stMarkdown, .css-163i3l4 .stMarkdown {
-        color: white !important;
-    }
-    
-    /* Buttons */
     .stButton button {
         background-color: #1976D2 !important;
         color: white !important;
@@ -53,19 +36,14 @@ st.markdown("""
         border: none !important;
         width: 100% !important;
     }
-    
     .stButton button:hover {
         background-color: #0D47A1 !important;
         box-shadow: 0 4px 15px rgba(13,71,161,0.3) !important;
     }
-    
-    /* Checkboxes */
     .stCheckbox label {
         font-size: 16px !important;
         color: #1a1a2e !important;
     }
-    
-    /* Diagnosis box */
     .diagnosis-box {
         background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
         padding: 25px;
@@ -73,23 +51,14 @@ st.markdown("""
         border-left: 6px solid #1976D2;
         margin: 20px 0;
     }
-    
     .diagnosis-box h2 {
         color: #0D47A1 !important;
         font-size: 32px !important;
     }
-    
-    .diagnosis-box h3 {
-        color: #0D47A1 !important;
-        font-size: 24px !important;
-    }
-    
     .diagnosis-box p {
         font-size: 18px !important;
         color: #1a1a2e !important;
     }
-    
-    /* Risk indicators */
     .risk-high {
         background: #FFEBEE;
         color: #D32F2F !important;
@@ -99,7 +68,6 @@ st.markdown("""
         font-size: 18px;
         border-left: 4px solid #D32F2F;
     }
-    
     .risk-medium {
         background: #FFF3E0;
         color: #F57C00 !important;
@@ -109,7 +77,6 @@ st.markdown("""
         font-size: 18px;
         border-left: 4px solid #F57C00;
     }
-    
     .risk-low {
         background: #E8F5E9;
         color: #388E3C !important;
@@ -119,8 +86,6 @@ st.markdown("""
         font-size: 18px;
         border-left: 4px solid #388E3C;
     }
-    
-    /* Metrics */
     .metric-card {
         background: white;
         padding: 20px;
@@ -129,20 +94,16 @@ st.markdown("""
         box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         border: 1px solid #e8ecf0;
     }
-    
     .metric-value {
         font-size: 2.2rem;
         font-weight: 700;
         color: #0D47A1;
     }
-    
     .metric-label {
         color: #6c757d;
         font-size: 0.9rem;
         margin-top: 5px;
     }
-    
-    /* Symptom tags */
     .symptom-tag {
         background: #E3F2FD;
         color: #0D47A1;
@@ -153,8 +114,6 @@ st.markdown("""
         display: inline-block;
         border: 1px solid #BBDEFB;
     }
-    
-    /* Footer */
     .footer {
         text-align: center;
         color: #6c757d;
@@ -163,15 +122,33 @@ st.markdown("""
         margin-top: 30px;
         font-size: 14px;
     }
-    
-    /* Download button */
     .stDownloadButton button {
         background-color: #43A047 !important;
         color: white !important;
     }
-    
     .stDownloadButton button:hover {
         background-color: #2E7D32 !important;
+    }
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #f0f4f8;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: white;
+        border-radius: 8px;
+        padding: 8px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0D47A1;
+        border: 1px solid #BBDEFB;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: #1976D2;
+        color: white;
+        border-color: #1976D2;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -217,23 +194,18 @@ except Exception as e:
     st.error(f"❌ Failed to load model: {e}")
     st.stop()
 
-# ---------- SIDEBAR NAVIGATION ----------
-with st.sidebar:
-    st.markdown("## 🏥 Navigation")
-    page = st.radio("", ["🏠 Home", "🩺 Disease Prediction", "📄 About"])
-    st.markdown("---")
-    st.markdown(f"**Diseases:** {len(diseases)}")
-    st.markdown(f"**Symptoms:** {len(features)}")
+# ---------- TABS NAVIGATION (Mobile-Friendly) ----------
+tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Disease Prediction", "📄 About"])
 
-# ---------- HOME ----------
-if page == "🏠 Home":
+# ---------- HOME TAB ----------
+with tab1:
     st.markdown("""
     ### 👋 Welcome to the AI Disease Diagnosis System
     
     This system uses **Machine Learning** to predict diseases based on your symptoms.
     
     #### How it works:
-    1. Go to **Disease Prediction**
+    1. Go to **Disease Prediction** tab
     2. Select your symptoms
     3. Click **Predict**
     4. Get instant diagnosis with confidence score
@@ -241,8 +213,8 @@ if page == "🏠 Home":
     ⚠️ **Disclaimer:** This is an educational project. Always consult a healthcare professional.
     """)
 
-# ---------- DISEASE PREDICTION ----------
-elif page == "🩺 Disease Prediction":
+# ---------- DISEASE PREDICTION TAB ----------
+with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Select all symptoms that apply:")
 
@@ -374,8 +346,8 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
                     mime="text/plain"
                 )
 
-# ---------- ABOUT ----------
-else:
+# ---------- ABOUT TAB ----------
+with tab3:
     st.markdown("""
     ### ℹ️ About This System
     
