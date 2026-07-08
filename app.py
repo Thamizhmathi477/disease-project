@@ -1,45 +1,46 @@
 import streamlit as st
 import os
-import sys
+import pickle
+import joblib
 import traceback
 
 st.set_page_config(page_title="Diagnostics", layout="wide")
 st.title("🔍 File Check & Model Loader")
 
-# List all files in current directory
+# List all files
 st.subheader("📁 Files in current directory:")
 files = os.listdir('.')
 for f in files:
     st.write(f"- {f}")
 
-# Now try to load the model with full error details
 st.subheader("🔄 Attempting to load model...")
 
+# Load model.pkl with pickle (not joblib)
 try:
-    import joblib
-    st.write("✅ joblib imported")
+    with open('model.pkl', 'rb') as f:
+        model = pickle.load(f)
+    st.success("✅ model.pkl loaded with pickle")
 except Exception as e:
-    st.error(f"❌ joblib import failed: {e}")
-    st.stop()
+    st.error(f"❌ Failed to load model.pkl with pickle")
+    st.code(f"Exception: {e}\nTraceback:\n{traceback.format_exc()}", language="python")
 
-# Function to load and show error
-def safe_load(filename):
+# Load other files with joblib
+def safe_load_joblib(filename):
     try:
         obj = joblib.load(filename)
         st.success(f"✅ Loaded {filename}")
         return obj
     except Exception as e:
         st.error(f"❌ Failed to load {filename}")
-        st.code(f"Exception: {e}\nType: {type(e)}\nTraceback:\n{traceback.format_exc()}", language="python")
+        st.code(f"Exception: {e}", language="python")
         return None
 
-model = safe_load('model.pkl')
-scaler = safe_load('scaler.pkl')
-encoder = safe_load('encoder.pkl')
-features = safe_load('features.pkl')
-diseases = safe_load('diseases.pkl')
+scaler = safe_load_joblib('scaler.pkl')
+encoder = safe_load_joblib('encoder.pkl')
+features = safe_load_joblib('features.pkl')
+diseases = safe_load_joblib('diseases.pkl')
 
-if all([model, scaler, encoder, features, diseases]):
+if 'model' in locals() and all([scaler, encoder, features, diseases]):
     st.success("🎉 All files loaded successfully! You can now deploy your full app.")
 else:
     st.error("❌ Some files failed to load. Please check the errors above.")
