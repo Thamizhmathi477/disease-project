@@ -35,8 +35,8 @@ st.set_page_config(page_title="🏥 AI Disease Diagnosis", page_icon="🏥", lay
 @st.cache_resource
 def load_model():
     model = joblib.load('model.pkl')
-    scaler = joblib.load('scaler.pkl')
-    encoder = joblib.load('encoder.pkl')
+    scaler = joblib.load('scale.pkl')
+    encoder = joblib.load('encode.pkl')
     features = joblib.load('features.pkl')
     diseases = joblib.load('diseases.pkl')
     return model, scaler, encoder, features, diseases
