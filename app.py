@@ -35,10 +35,10 @@ def safe_load_joblib(filename):
         st.code(f"Exception: {e}", language="python")
         return None
 
-scaler = safe_load_joblib('scaler.pkl')
-encoder = safe_load_joblib('encoder.pkl')
-features = safe_load_joblib('features.pkl')
-diseases = safe_load_joblib('diseases.pkl')
+scaler =joblib.load('scaler.pkl')
+encoder =joblib.load('encoder.pkl')
+features =joblib.load('features.pkl')
+diseases =joblib.load('diseases.pkl')
 
 if 'model' in locals() and all([scaler, encoder, features, diseases]):
     st.success("🎉 All files loaded successfully! You can now deploy your full app.")
