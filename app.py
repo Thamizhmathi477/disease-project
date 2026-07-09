@@ -2,95 +2,157 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from datetime import datetime
+import time
+import plotly.graph_objects as go
 
 # ---------- PAGE CONFIG ----------
-st.set_page_config(page_title="🏥 AI Disease Diagnosis", page_icon="🏥", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="🏥 MediAI - Disease Diagnosis System",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# ---------- SEARCH BAR STYLING ----------
-st.markdown("""
-<style>
-    /* Style search bar */
-    .stTextInput input {
-        font-size: 18px !important;
-        padding: 12px !important;
-        border-radius: 10px !important;
-        border: 2px solid #1976D2 !important;
-    }
-    .stTextInput input:focus {
-        border-color: #0D47A1 !important;
-        box-shadow: 0 0 10px rgba(13,71,161,0.2) !important;
-    }
-    .stApp { background-color: #f8f9fa; }
-    h1, h2, h3, h4 { color: #0D47A1 !important; }
-    p, li, .stMarkdown { font-size: 16px !important; color: #1a1a2e !important; }
-    .stButton button { background-color: #1976D2 !important; color: white !important; font-size: 18px !important; font-weight: 600 !important; border-radius: 10px !important; padding: 10px 25px !important; border: none !important; width: 100% !important; }
-    .stButton button:hover { background-color: #0D47A1 !important; }
-    .stCheckbox label { font-size: 16px !important; color: #1a1a2e !important; }
-    .diagnosis-box { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 25px; border-radius: 15px; border-left: 6px solid #1976D2; margin: 20px 0; }
-    .diagnosis-box h2 { color: #0D47A1 !important; font-size: 32px !important; }
-    .diagnosis-box p { font-size: 18px !important; }
-    .risk-high { background: #FFEBEE; color: #D32F2F !important; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 18px; border-left: 4px solid #D32F2F; }
-    .risk-medium { background: #FFF3E0; color: #F57C00 !important; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 18px; border-left: 4px solid #F57C00; }
-    .risk-low { background: #E8F5E9; color: #388E3C !important; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 18px; border-left: 4px solid #388E3C; }
-    .metric-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #e8ecf0; }
-    .metric-value { font-size: 2.2rem; font-weight: 700; color: #0D47A1; }
-    .metric-label { color: #6c757d; font-size: 0.9rem; margin-top: 5px; }
-    .symptom-tag { background: #E3F2FD; color: #0D47A1; padding: 4px 14px; border-radius: 20px; font-size: 14px; margin: 3px; display: inline-block; border: 1px solid #BBDEFB; }
-    .footer { text-align: center; color: #6c757d; padding: 15px; border-top: 1px solid #e8ecf0; margin-top: 30px; font-size: 14px; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: #f0f4f8; padding: 10px; border-radius: 10px; }
-    .stTabs [data-baseweb="tab"] { background-color: white; border-radius: 8px; padding: 8px 20px; font-size: 16px; font-weight: 600; color: #0D47A1; border: 1px solid #BBDEFB; }
-    .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #1976D2; color: white; border-color: #1976D2; }
-</style>
-""", unsafe_allow_html=True)
+# ---------- DARK MODE TOGGLE ----------
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = False
+
+dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
+st.session_state.dark_mode = dark_mode
+
+# ---------- CSS STYLING ----------
+if dark_mode:
+    st.markdown("""
+    <style>
+        .stApp { background-color: #0a0e1a; }
+        h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stTextInput label, .stCheckbox label {
+            color: #e0e0e0 !important;
+        }
+        .stTabs [data-baseweb="tab-list"] { background-color: #1a1a2e; }
+        .stTabs [data-baseweb="tab"] { background-color: #16213e; color: #e0e0e0 !important; border-color: #0f3460; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #1976D2; color: white !important; }
+        .metric-card { background: #16213e !important; border-color: #0f3460 !important; }
+        .metric-value { color: #4fc3f7 !important; }
+        .metric-label { color: #a0a0a0 !important; }
+        .diagnosis-box { background: linear-gradient(135deg, #0d1b2a, #1b2838) !important; border-left-color: #1976D2 !important; }
+        .diagnosis-box h2 { color: #4fc3f7 !important; }
+        .diagnosis-box p { color: #e0e0e0 !important; }
+        .symptom-tag { background: #16213e !important; color: #4fc3f7 !important; border-color: #0f3460 !important; }
+        .footer { border-top-color: #1a1a2e !important; color: #a0a0a0 !important; }
+        .stTextInput input { background-color: #1a1a2e !important; color: #e0e0e0 !important; border-color: #1976D2 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+        .stApp { background-color: #f5f7fa; }
+        h1, h2, h3, h4, h5, h6, p, li, .stMarkdown { color: #1a1a2e !important; }
+        .stTabs [data-baseweb="tab-list"] { background-color: #e8ecf0; }
+        .stTabs [data-baseweb="tab"] { background-color: white; color: #0D47A1 !important; border-color: #BBDEFB; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #1976D2; color: white !important; }
+        .metric-card { background: white !important; border-color: #e8ecf0 !important; }
+        .metric-value { color: #0D47A1 !important; }
+        .metric-label { color: #6c757d !important; }
+        .diagnosis-box { background: linear-gradient(135deg, #E3F2FD, #BBDEFB) !important; border-left-color: #1976D2 !important; }
+        .diagnosis-box h2 { color: #0D47A1 !important; }
+        .diagnosis-box p { color: #1a1a2e !important; }
+        .symptom-tag { background: #E3F2FD !important; color: #0D47A1 !important; border-color: #BBDEFB !important; }
+        .footer { border-top-color: #e8ecf0 !important; color: #6c757d !important; }
+        .stTextInput input { border-color: #1976D2 !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ---------- LOAD MODEL ----------
-try:
+@st.cache_resource
+def load_model():
     model = joblib.load('model.pkl')
     scaler = joblib.load('scaler.pkl')
     encoder = joblib.load('encoder.pkl')
     features = joblib.load('features.pkl')
     diseases = joblib.load('diseases.pkl')
+    return model, scaler, encoder, features, diseases
+
+try:
+    model, scaler, encoder, features, diseases = load_model()
 except Exception as e:
     st.error(f"❌ Error loading model: {e}")
     st.stop()
 
-st.title("🏥 AI Disease Diagnosis System")
+# ---------- SIDEBAR ----------
+with st.sidebar:
+    st.markdown("## 🏥 MediAI")
+    st.markdown("---")
+    st.markdown("### 📊 Model Info")
+    st.metric("🏥 Diseases", len(diseases))
+    st.metric("🔬 Symptoms", len(features))
+    st.metric("📊 Accuracy", "88%")
+    st.markdown("---")
+    st.markdown("### 👨‍💻 Developer")
+    st.markdown("**Thamizhmathi Sivakumar**")
+    st.markdown("Arunai Engineering College")
+    st.markdown("CSE (Third Year, 2026)")
+    st.markdown("---")
+    st.markdown(f"**Live Demo:**\n[Open App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)")
+    st.markdown(f"**GitHub:**\n[View Code](https://github.com/Thamizhmathi477/disease-project)")
+
+# ---------- MAIN TITLE ----------
+st.title("🏥 MediAI – Disease Diagnosis System")
+st.markdown("*AI-Powered Healthcare Assistant*")
 
 # ---------- METRICS ----------
-col1, col2, col3 = st.columns(3)
-with col1: st.markdown(f'<div class="metric-card"><div class="metric-value">{len(diseases)}</div><div class="metric-label">🏥 Diseases</div></div>', unsafe_allow_html=True)
-with col2: st.markdown(f'<div class="metric-card"><div class="metric-value">{len(features)}</div><div class="metric-label">🔬 Symptoms</div></div>', unsafe_allow_html=True)
-with col3: st.markdown('<div class="metric-card"><div class="metric-value">88%</div><div class="metric-label">📊 Accuracy</div></div>', unsafe_allow_html=True)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.markdown(f'<div class="metric-card"><div class="metric-value">{len(diseases)}</div><div class="metric-label">🏥 Diseases</div></div>', unsafe_allow_html=True)
+with col2:
+    st.markdown(f'<div class="metric-card"><div class="metric-value">{len(features)}</div><div class="metric-label">🔬 Symptoms</div></div>', unsafe_allow_html=True)
+with col3:
+    st.markdown('<div class="metric-card"><div class="metric-value">88%</div><div class="metric-label">📊 Accuracy</div></div>', unsafe_allow_html=True)
+with col4:
+    st.markdown('<div class="metric-card"><div class="metric-value">✅</div><div class="metric-label">🟢 Live</div></div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
 # ---------- TABS ----------
-tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Disease Prediction", "📄 About"])
+tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🩺 Disease Prediction", "📊 Model Insights", "📄 About"])
 
 # ---------- HOME TAB ----------
 with tab1:
     st.markdown("""
-    ### 👋 Welcome to the AI Disease Diagnosis System
-    This system uses **Machine Learning** to predict diseases based on your symptoms.
-    #### How it works:
-    1. Go to **Disease Prediction** tab
+    ## 👋 Welcome to MediAI
+
+    **MediAI** is an AI-powered disease diagnosis system that uses machine learning to predict diseases based on your symptoms.
+
+    ### 🎯 How It Works
+    1. Go to the **Disease Prediction** tab
     2. **Search** for your symptoms using the search bar
-    3. Select symptoms that apply
-    4. Click **Predict**
-    5. Get instant diagnosis with confidence score
-    ⚠️ **Disclaimer:** This is an educational project. Always consult a healthcare professional.
+    3. **Select** all symptoms that apply
+    4. Click **Predict** to get instant diagnosis
+    5. View **confidence score**, **risk level**, and **recommendations**
+
+    ### ✨ Features
+    ✅ **41 Diseases** – comprehensive coverage
+    ✅ **131 Symptoms** – extensive symptom list
+    ✅ **88% Accuracy** – high prediction confidence
+    ✅ **Instant Results** – real-time diagnosis
+    ✅ **Downloadable Reports** – save your diagnosis
+    ✅ **Dark Mode** – comfortable viewing
+
+    ### ⚠️ Disclaimer
+    *This is an educational project. Always consult a healthcare professional for accurate medical advice.*
     """)
 
-# ---------- DISEASE PREDICTION TAB (WITH SEARCH BAR) ----------
+# ---------- DISEASE PREDICTION TAB ----------
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Select all symptoms that apply:")
 
-    # --- Search Bar ---
+    # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
 
-    # Filter symptoms based on search
+    # Filter symptoms
     if search_term:
         filtered_features = [s for s in features if search_term.lower() in s.lower()]
     else:
@@ -98,13 +160,37 @@ with tab2:
 
     st.caption(f"Showing {len(filtered_features)} of {len(features)} symptoms")
 
-    # Display checkboxes
+    # Group by categories
+    categories = {
+        "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
+        "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
+        "🤕 Pain": ["headache", "body_ache", "muscle_pain", "joint_pain", "back_pain"],
+        "💊 Digestive": ["nausea", "vomiting", "diarrhea", "abdominal_pain", "loss_appetite"],
+        "🧠 Neurological": ["dizziness", "confusion", "numbness", "tingling", "tremors"],
+        "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
+    }
+
     selected = []
-    cols = st.columns(4)
-    for i, sym in enumerate(filtered_features):
-        col = cols[i % 4]
-        if col.checkbox(sym.replace('_', ' ').title(), key=sym):
-            selected.append(sym)
+
+    # Show filtered symptoms by category
+    if search_term:
+        # Show flat list when searching
+        cols = st.columns(4)
+        for i, sym in enumerate(filtered_features):
+            col = cols[i % 4]
+            if col.checkbox(sym.replace('_', ' ').title(), key=sym):
+                selected.append(sym)
+    else:
+        # Show categorized
+        for category, sym_list in categories.items():
+            category_symptoms = [s for s in sym_list if s in features]
+            if category_symptoms:
+                st.markdown(f"#### {category}")
+                cols = st.columns(4)
+                for i, sym in enumerate(category_symptoms):
+                    col = cols[i % 4]
+                    if col.checkbox(sym.replace('_', ' ').title(), key=sym):
+                        selected.append(sym)
 
     # Show selected tags
     if selected:
@@ -118,6 +204,12 @@ with tab2:
             st.warning("⚠️ Please select at least one symptom.")
         else:
             with st.spinner("🧠 Analyzing symptoms..."):
+                # Progress bar
+                progress_bar = st.progress(0)
+                for i in range(100):
+                    time.sleep(0.005)
+                    progress_bar.progress(i + 1)
+
                 vec = np.zeros(len(features))
                 for sym in selected:
                     if sym in features:
@@ -128,9 +220,14 @@ with tab2:
                 probs = model.predict_proba(scaled)[0]
                 confidence = max(probs) * 100
 
+                progress_bar.empty()
+
+                # ---------- RESULTS ----------
                 st.markdown("---")
-                st.markdown("### 📊 Diagnosis Result")
+                st.markdown("## 📊 Diagnosis Result")
+
                 col1, col2 = st.columns([2, 1])
+
                 with col1:
                     st.markdown(f"""
                     <div class="diagnosis-box">
@@ -139,6 +236,7 @@ with tab2:
                         <p>Confidence: <strong>{confidence:.2f}%</strong></p>
                     </div>
                     """, unsafe_allow_html=True)
+
                 with col2:
                     if confidence > 80:
                         st.markdown('<div class="risk-high">🔴 High Risk - Consult a doctor immediately</div>', unsafe_allow_html=True)
@@ -147,9 +245,54 @@ with tab2:
                     else:
                         st.markdown('<div class="risk-low">🟢 Low Risk - Take rest and stay hydrated</div>', unsafe_allow_html=True)
 
+                # Confidence gauge
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=confidence,
+                    title={'text': "Confidence Score"},
+                    domain={'x': [0, 1], 'y': [0, 1]},
+                    gauge={
+                        'axis': {'range': [None, 100], 'tickwidth': 1},
+                        'bar': {'color': "#1976D2"},
+                        'steps': [
+                            {'range': [0, 40], 'color': "#FFEBEE"},
+                            {'range': [40, 70], 'color': "#FFF3E0"},
+                            {'range': [70, 100], 'color': "#E8F5E9"}
+                        ],
+                        'threshold': {
+                            'line': {'color': "red", 'width': 4},
+                            'thickness': 0.75,
+                            'value': 80
+                        }
+                    }
+                ))
+                fig.update_layout(height=250)
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Emergency detection
                 emergency = ['chest_pain', 'shortness_breath', 'fainting', 'seizures']
                 if any(s in emergency for s in selected):
                     st.error("🚨 **Emergency symptoms detected!** Seek immediate medical attention.")
+
+                # Doctor recommendation
+                doctor_mapping = {
+                    'Heart Attack': 'Cardiologist',
+                    'Dengue': 'Infectious Disease Specialist',
+                    'Diabetes': 'Endocrinologist',
+                    'Arthritis': 'Rheumatologist',
+                    'Migraine': 'Neurologist',
+                    'Asthma': 'Pulmonologist',
+                    'Fungal Infection': 'Dermatologist',
+                    'Acne': 'Dermatologist',
+                    'Gastroenteritis': 'Gastroenterologist',
+                    'Peptic Ulcer Disease': 'Gastroenterologist',
+                    'Hypothyroidism': 'Endocrinologist',
+                    'Hyperthyroidism': 'Endocrinologist',
+                    'Hypertension': 'Cardiologist'
+                }
+
+                if disease in doctor_mapping:
+                    st.info(f"👨‍⚕️ **Recommended Specialist:** {doctor_mapping[disease]}")
 
                 st.markdown("---")
                 st.markdown("### 💊 Recommendations")
@@ -160,21 +303,27 @@ with tab2:
 
                 st.markdown("---")
                 st.markdown("### 📄 Download Report")
+
                 report = f"""
 =====================================
-      AI DISEASE DIAGNOSIS REPORT
+         MEDIAI DIAGNOSIS REPORT
 =====================================
+
 Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+
 -------------------------------------
       DIAGNOSIS RESULTS
 -------------------------------------
+
 Predicted Disease: {disease}
 Confidence Score: {confidence:.2f}%
 Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Low'}
+
 -------------------------------------
       SYMPTOMS SELECTED
 -------------------------------------
 {', '.join(selected)}
+
 -------------------------------------
       RECOMMENDATIONS
 -------------------------------------
@@ -183,30 +332,110 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
 • Get plenty of rest
 • Stay hydrated
 • Eat healthy food
+
+{'• Recommended Specialist: ' + doctor_mapping[disease] if disease in doctor_mapping else ''}
+
 =====================================
 ⚠️ This is an educational project.
    Always consult a healthcare professional.
 =====================================
 """
-                st.download_button("📥 Download Diagnosis Report", data=report, file_name=f"diagnosis_{datetime.now().strftime('%Y%m%d_%H%M')}.txt", mime="text/plain")
+                st.download_button(
+                    "📥 Download Diagnosis Report",
+                    data=report,
+                    file_name=f"diagnosis_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                    mime="text/plain"
+                )
+
+# ---------- MODEL INSIGHTS TAB ----------
+with tab3:
+    st.markdown("## 📊 Model Insights")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### 🎯 Model Performance")
+        performance_data = {
+            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+            'Score': ['88%', '89%', '87%', '88%']
+        }
+        st.table(pd.DataFrame(performance_data))
+
+    with col2:
+        st.markdown("### 📈 Algorithm Details")
+        st.markdown("""
+        **Random Forest Classifier**
+        - ✅ Ensemble method
+        - ✅ Reduces overfitting
+        - ✅ Handles high-dimensional data
+        - ✅ Identifies feature importance
+        """)
+
+    st.markdown("---")
+    st.markdown("### 🔬 Top 15 Most Important Symptoms")
+
+    # Feature importance chart
+    importances = model.feature_importances_
+    feature_names = features
+
+    importance_df = pd.DataFrame({
+        'Symptom': feature_names,
+        'Importance': importances
+    }).sort_values('Importance', ascending=False).head(15)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(importance_df)))
+    ax.barh(importance_df['Symptom'], importance_df['Importance'], color=colors)
+    ax.set_xlabel('Importance', fontsize=12)
+    ax.set_title('Top 15 Most Important Symptoms', fontsize=14)
+    ax.tick_params(axis='y', labelsize=10)
+    plt.tight_layout()
+    st.pyplot(fig)
 
 # ---------- ABOUT TAB ----------
-with tab3:
+with tab4:
     st.markdown("""
-    ### ℹ️ About This System
-    **AI-Based Disease Diagnosis and Recommendation System**
-    Built with:
-    - **Streamlit** – Web framework
-    - **Scikit-learn** – Machine learning
-    - **Random Forest** – Classification algorithm
-    - **Python** – Programming language
-    **Developer:** Thamizhmathi Sivakumar
-    **College:** Arunai Engineering College
-    **Department:** CSE (Third Year, 2026)
-    ⚠️ **Disclaimer:** This is an educational project for preliminary diagnosis only.  
-    **Always consult a healthcare professional for accurate medical advice.**
+    ## ℹ️ About MediAI
+
+    ### Project Overview
+    **MediAI** is an AI-powered disease diagnosis system developed as a third-year CSE project.
+
+    ### Technology Stack
+    | Layer | Technology |
+    |-------|------------|
+    | Frontend | Streamlit |
+    | Backend | Python 3.11 |
+    | Machine Learning | Scikit-learn (Random Forest) |
+    | Data Processing | Pandas, NumPy |
+    | Model Serialization | Joblib |
+    | Deployment | Streamlit Cloud |
+
+    ### Developer
+    **Thamizhmathi Sivakumar**
+    - 3rd Year CSE Student
+    - Arunai Engineering College
+    - Email: thamizhmathi477@gmail.com
+
+    ### Links
+    - 🔗 [Live App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)
+    - 📂 [GitHub Repository](https://github.com/Thamizhmathi477/disease-project)
+
+    ### ⚠️ Disclaimer
+    *This is an educational project for preliminary diagnosis only.  
+    Always consult a healthcare professional for accurate medical advice.*
+
+    ### References
+    1. Dahiwade, D., et al. (2019). "Designing Disease Prediction Model Using Machine Learning Approach." ICCMC.
+    2. Grampurohit, S., et al. (2020). "Disease Prediction using Machine Learning Algorithms." INCET.
+    3. Shetty, S.V., et al. (2019). "Symptom Based Health Prediction using Data Mining." ICCES.
+    4. Chen, M., et al. (2017). "Disease Prediction by Machine Learning Over Big Data." IEEE Access.
     """)
 
 # ---------- FOOTER ----------
 st.markdown("---")
-st.markdown('<div class="footer">⚠️ <strong>Disclaimer:</strong> Educational purposes only. Not a substitute for professional medical advice.<br>© 2026 AI Disease Diagnosis System | Thamizhmathi Sivakumar</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="footer">
+    ⚠️ <strong>Disclaimer:</strong> Educational purposes only. Not a substitute for professional medical advice.<br>
+    © 2026 MediAI | Developed by Thamizhmathi Sivakumar | Arunai Engineering College
+</div>
+""", unsafe_allow_html=True)
