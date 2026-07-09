@@ -533,7 +533,7 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION – SHOW ALL SYMPTOMS
+# TAB 2: DISEASE PREDICTION – WORKING SEARCH
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
@@ -541,11 +541,16 @@ with tab2:
 
     # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
-    highlight_matches = search_term != ""
 
-    st.caption(f"Showing all {len(features)} symptoms" + (f" – matching symptoms marked with 🔍" if highlight_matches else ""))
+    # Filter symptoms based on search
+    if search_term:
+        filtered_features = [s for s in features if search_term.lower() in s.lower()]
+        st.caption(f"Showing {len(filtered_features)} matching symptoms out of {len(features)} total")
+    else:
+        filtered_features = features
+        st.caption(f"Showing all {len(features)} symptoms")
 
-    # Define categories (add any known symptom patterns)
+    # Categories – only used when there's no search term
     categories = {
         "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
         "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
@@ -555,41 +560,46 @@ with tab2:
         "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
     }
 
-    # Flatten the category lists for quick lookup
-    category_symptom_set = set()
-    for sym_list in categories.values():
-        category_symptom_set.update(sym_list)
-
-    # Separate symptoms into categorized and uncategorized
-    categorized = {}
-    for cat, sym_list in categories.items():
-        cat_syms = [s for s in sym_list if s in features]
-        categorized[cat] = cat_syms
-
-    # Uncategorized are those in features but not in any category list
-    all_features_set = set(features)
-    categorized_set = set().union(*categorized.values())
-    uncategorized = list(all_features_set - categorized_set)
-    if uncategorized:
-        categorized["🔸 Other"] = uncategorized
-
     selected = []
 
-    # Display each category
-    for cat, sym_list in categorized.items():
-        if not sym_list:
-            continue
-        st.markdown(f"#### {cat}")
+    # Display symptoms
+    if search_term:
+        # When searching: show a flat list of matching symptoms (no categories)
         cols = st.columns(4)
-        for i, sym in enumerate(sym_list):
+        for i, sym in enumerate(filtered_features):
             col = cols[i % 4]
-            # Determine label
-            if highlight_matches and search_term.lower() in sym.lower():
-                label = f"🔍 {sym.replace('_', ' ').title()}"
+            # Highlight the matching part – bold and with a magnifying glass
+            display_name = sym.replace('_', ' ').title()
+            if search_term.lower() in sym.lower():
+                # Find where the match occurs
+                lower_sym = sym.lower()
+                lower_search = search_term.lower()
+                idx = lower_sym.find(lower_search)
+                if idx != -1:
+                    before = sym[:idx]
+                    match = sym[idx:idx+len(search_term)]
+                    after = sym[idx+len(search_term):]
+                    highlighted = f"🔍 {before.replace('_', ' ').title()}<span style='background-color: #FFEB3B; font-weight: bold; color: #0D47A1;'>{match.replace('_', ' ').title()}</span>{after.replace('_', ' ').title()}"
+                else:
+                    highlighted = f"🔍 {display_name}"
+                # Use HTML for the checkbox label
+                if col.checkbox(highlighted, key=f"search_{sym}"):
+                    selected.append(sym)
             else:
-                label = sym.replace('_', ' ').title()
-            if col.checkbox(label, key=f"cat_{sym}"):
-                selected.append(sym)
+                if col.checkbox(display_name, key=f"search_{sym}"):
+                    selected.append(sym)
+    else:
+        # No search: show categories
+        for category, sym_list in categories.items():
+            category_symptoms = [s for s in sym_list if s in features]
+            if category_symptoms:
+                st.markdown(f"#### {category}")
+                cols = st.columns(4)
+                for i, sym in enumerate(category_symptoms):
+                    col = cols[i % 4]
+                    display_name = sym.replace('_', ' ').title()
+                    if col.checkbox(display_name, key=f"cat_{sym}"):
+                        selected.append(sym)
 
     # Show selected tags
     if selected:
