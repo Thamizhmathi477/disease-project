@@ -16,6 +16,57 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ---------- SCROLL FIX – CSS ----------
+st.markdown("""
+<style>
+    /* Enable scrolling for the entire app */
+    .main {
+        overflow-y: auto !important;
+        height: 100vh !important;
+    }
+    
+    /* Ensure content container can scroll */
+    .block-container {
+        overflow-y: auto !important;
+        max-height: 100vh !important;
+        padding-bottom: 100px !important;
+    }
+    
+    /* Sidebar scrolling */
+    section[data-testid="stSidebar"] {
+        overflow-y: auto !important;
+        max-height: 100vh !important;
+    }
+    
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #1976D2;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #0D47A1;
+    }
+    
+    /* Dark mode scrollbar */
+    @media (prefers-color-scheme: dark) {
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1976D2;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ---------- SESSION STATE ----------
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
@@ -26,214 +77,268 @@ if 'history' not in st.session_state:
 dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
 st.session_state.dark_mode = dark_mode
 
-# ---------- CSS STYLING - HOSPITAL THEME ----------
+# ---------- CSS STYLING - PREMIUM HOSPITAL THEME ----------
 if dark_mode:
     st.markdown("""
     <style>
-        .stApp { background-color: #0a0e1a; }
+        .stApp { background: linear-gradient(135deg, #0a0e1a, #1a1a2e, #0a1628); }
         h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stTextInput label, .stCheckbox label {
             color: #e0e0e0 !important;
         }
-        .stTabs [data-baseweb="tab-list"] { background-color: #1a1a2e; border-radius: 10px; }
-        .stTabs [data-baseweb="tab"] { background-color: #16213e; color: #e0e0e0 !important; border-color: #0f3460; }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #1976D2; color: white !important; }
-        .metric-card { background: #16213e !important; border-color: #0f3460 !important; }
+        .stTabs [data-baseweb="tab-list"] { background: rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(10px); }
+        .stTabs [data-baseweb="tab"] { background: transparent; color: #a0a0a0 !important; border: none; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] { background: #1976D2; color: white !important; border-radius: 8px; }
+        .metric-card { background: rgba(255,255,255,0.05) !important; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 16px !important; }
         .metric-value { color: #4fc3f7 !important; }
         .metric-label { color: #a0a0a0 !important; }
-        .diagnosis-box { background: linear-gradient(135deg, #0d1b2a, #1b2838) !important; border-left-color: #1976D2 !important; }
+        .diagnosis-box { background: linear-gradient(135deg, rgba(13,71,161,0.2), rgba(25,118,210,0.1)) !important; border: 1px solid rgba(25,118,210,0.2) !important; }
         .diagnosis-box h2 { color: #4fc3f7 !important; }
         .diagnosis-box p { color: #e0e0e0 !important; }
-        .symptom-tag { background: #16213e !important; color: #4fc3f7 !important; border-color: #0f3460 !important; }
-        .footer { border-top-color: #1a1a2e !important; color: #a0a0a0 !important; }
-        .stTextInput input { background-color: #1a1a2e !important; color: #e0e0e0 !important; border-color: #1976D2 !important; }
-        .stSelectbox select { background-color: #1a1a2e !important; color: #e0e0e0 !important; }
-        .hospital-header { background: linear-gradient(135deg, #0a1628, #1a2a4a) !important; }
-        .hospital-footer { background: #0a1628 !important; color: #a0a0a0 !important; }
+        .symptom-tag { background: rgba(25,118,210,0.2) !important; color: #4fc3f7 !important; border: 1px solid rgba(25,118,210,0.2) !important; }
+        .footer { border-top-color: rgba(255,255,255,0.05) !important; color: #a0a0a0 !important; }
+        .stTextInput input { background: rgba(255,255,255,0.05) !important; color: #e0e0e0 !important; border: 1px solid rgba(25,118,210,0.3) !important; }
+        .stButton button { background: linear-gradient(135deg, #1976D2, #0D47A1) !important; color: white !important; border: none !important; }
+        .hospital-header { background: linear-gradient(135deg, rgba(13,71,161,0.3), rgba(25,118,210,0.1)) !important; backdrop-filter: blur(10px); border: 1px solid rgba(25,118,210,0.1) !important; }
+        .risk-high { background: rgba(211,47,47,0.15) !important; border-left: 4px solid #D32F2F !important; color: #FF6B6B !important; }
+        .risk-medium { background: rgba(245,124,0,0.15) !important; border-left: 4px solid #F57C00 !important; color: #FFB74D !important; }
+        .risk-low { background: rgba(56,142,60,0.15) !important; border-left: 4px solid #388E3C !important; color: #81C784 !important; }
     </style>
     """, unsafe_allow_html=True)
 else:
     st.markdown("""
     <style>
-        /* Hospital Theme - Clean White & Blue */
-        .stApp { background: #f0f4f8; }
-        
-        /* Headers */
-        h1, h2, h3, h4, h5, h6 { color: #0D47A1 !important; font-weight: 600 !important; }
+        .stApp {
+            background: linear-gradient(135deg, #e8f0fe 0%, #f5f7fa 50%, #e3ecf5 100%);
+        }
+        h1, h2, h3, h4, h5, h6 { 
+            color: #0D47A1 !important; 
+            font-weight: 700 !important;
+        }
         p, li, .stMarkdown { color: #1a1a2e !important; }
-        
-        /* Tabs */
         .stTabs [data-baseweb="tab-list"] { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 14px; 
+            padding: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.5);
         }
         .stTabs [data-baseweb="tab"] { 
             background: transparent; 
             color: #0D47A1 !important; 
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 500;
+            padding: 8px 20px;
         }
         .stTabs [data-baseweb="tab"][aria-selected="true"] { 
             background: #1976D2; 
             color: white !important; 
+            box-shadow: 0 4px 12px rgba(25,118,210,0.3);
         }
-        
-        /* Metric Cards */
         .metric-card { 
-            background: white !important; 
+            background: rgba(255,255,255,0.8) !important;
+            backdrop-filter: blur(20px);
             border-radius: 16px !important;
-            padding: 20px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
-            border: none !important;
-            transition: transform 0.2s;
+            padding: 22px !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.6) !important;
+            transition: all 0.3s ease;
         }
-        .metric-card:hover { transform: translateY(-4px); }
-        .metric-value { color: #0D47A1 !important; font-size: 2.2rem !important; }
-        .metric-label { color: #6c757d !important; font-size: 0.9rem !important; }
-        
-        /* Diagnosis Box */
+        .metric-card:hover { 
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(13,71,161,0.12) !important;
+        }
+        .metric-value { 
+            color: #0D47A1 !important; 
+            font-size: 2.2rem !important;
+            font-weight: 700 !important;
+        }
+        .metric-label { 
+            color: #6c757d !important; 
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+        }
         .diagnosis-box { 
-            background: linear-gradient(135deg, #E3F2FD, #BBDEFB) !important; 
+            background: linear-gradient(135deg, rgba(227, 242, 253, 0.9), rgba(187, 222, 251, 0.7)) !important;
+            backdrop-filter: blur(10px);
             border-radius: 16px !important;
             padding: 25px !important;
             border-left: 6px solid #1976D2 !important;
-            box-shadow: 0 4px 16px rgba(25,118,210,0.15) !important;
+            box-shadow: 0 8px 32px rgba(25,118,210,0.15) !important;
+            border: 1px solid rgba(255,255,255,0.5);
         }
         .diagnosis-box h2 { color: #0D47A1 !important; font-size: 32px !important; }
         .diagnosis-box p { color: #1a1a2e !important; font-size: 18px !important; }
-        
-        /* Risk Indicators */
         .risk-high { 
-            background: #FFEBEE; 
+            background: rgba(255,235,238,0.9) !important;
+            backdrop-filter: blur(10px);
             color: #D32F2F !important; 
             padding: 14px 20px; 
             border-radius: 12px; 
             font-weight: 700; 
             font-size: 18px; 
             border-left: 5px solid #D32F2F;
-            box-shadow: 0 2px 8px rgba(211,47,47,0.12);
+            box-shadow: 0 2px 12px rgba(211,47,47,0.12);
+            border: 1px solid rgba(211,47,47,0.1);
         }
         .risk-medium { 
-            background: #FFF3E0; 
+            background: rgba(255,243,224,0.9) !important;
+            backdrop-filter: blur(10px);
             color: #F57C00 !important; 
             padding: 14px 20px; 
             border-radius: 12px; 
             font-weight: 700; 
             font-size: 18px; 
             border-left: 5px solid #F57C00;
-            box-shadow: 0 2px 8px rgba(245,124,0,0.12);
+            box-shadow: 0 2px 12px rgba(245,124,0,0.12);
+            border: 1px solid rgba(245,124,0,0.1);
         }
         .risk-low { 
-            background: #E8F5E9; 
+            background: rgba(232,245,233,0.9) !important;
+            backdrop-filter: blur(10px);
             color: #388E3C !important; 
             padding: 14px 20px; 
             border-radius: 12px; 
             font-weight: 700; 
             font-size: 18px; 
             border-left: 5px solid #388E3C;
-            box-shadow: 0 2px 8px rgba(56,142,60,0.12);
+            box-shadow: 0 2px 12px rgba(56,142,60,0.12);
+            border: 1px solid rgba(56,142,60,0.1);
         }
-        
-        /* Symptom Tags */
         .symptom-tag { 
-            background: #E3F2FD !important; 
+            background: rgba(227, 242, 253, 0.8) !important; 
             color: #0D47A1 !important; 
             padding: 6px 16px; 
             border-radius: 20px; 
             font-size: 14px; 
             margin: 4px; 
             display: inline-block; 
-            border: 1px solid #BBDEFB !important;
+            border: 1px solid rgba(25,118,210,0.15) !important;
             font-weight: 500;
         }
-        
-        /* Buttons */
         .stButton button { 
             background: linear-gradient(135deg, #1976D2, #0D47A1) !important; 
             color: white !important; 
             font-size: 18px !important; 
             font-weight: 600 !important; 
             border-radius: 12px !important; 
-            padding: 12px 30px !important; 
+            padding: 14px 30px !important; 
             border: none !important; 
             width: 100% !important;
-            box-shadow: 0 4px 16px rgba(25,118,210,0.25) !important;
-            transition: all 0.3s !important;
+            box-shadow: 0 4px 16px rgba(25,118,210,0.3) !important;
+            transition: all 0.3s ease !important;
         }
         .stButton button:hover { 
-            transform: scale(1.02);
-            box-shadow: 0 6px 24px rgba(25,118,210,0.35) !important;
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 32px rgba(25,118,210,0.4) !important;
         }
-        
-        /* Search Bar */
         .stTextInput input { 
-            border: 2px solid #1976D2 !important; 
+            border: 2px solid rgba(25,118,210,0.2) !important; 
             border-radius: 12px !important;
-            padding: 12px !important;
+            padding: 14px !important;
             font-size: 16px !important;
-            background: white !important;
+            background: rgba(255,255,255,0.7) !important;
+            backdrop-filter: blur(10px);
         }
         .stTextInput input:focus { 
-            border-color: #0D47A1 !important; 
-            box-shadow: 0 0 0 3px rgba(25,118,210,0.15) !important;
+            border-color: #1976D2 !important; 
+            box-shadow: 0 0 0 4px rgba(25,118,210,0.12) !important;
         }
-        
-        /* Footer */
         .footer { 
             text-align: center; 
             color: #6c757d; 
             padding: 20px; 
-            border-top: 1px solid #e0e0e0; 
             margin-top: 30px; 
             font-size: 14px;
-            background: white;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
             border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.5);
         }
-        
-        /* Sidebar */
-        .css-1d391kg, .css-163i3l4 {
-            background: white !important;
-            border-right: 1px solid #e8ecf0 !important;
+        section[data-testid="stSidebar"] {
+            background: rgba(255,255,255,0.85) !important;
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255,255,255,0.5);
         }
-        
-        /* Hospital Header */
         .hospital-header {
-            background: linear-gradient(135deg, #0D47A1, #1565C0);
-            padding: 20px 30px;
-            border-radius: 16px;
+            background: linear-gradient(135deg, #0D47A1, #1565C0, #1976D2);
+            padding: 25px 35px;
+            border-radius: 18px;
             color: white;
             margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 20px rgba(13,71,161,0.25);
+            box-shadow: 0 8px 32px rgba(13,71,161,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .hospital-header h1 { color: white !important; margin: 0; font-size: 2rem; }
-        .hospital-header p { color: rgba(255,255,255,0.85) !important; margin: 0; }
+        .hospital-header h1 { 
+            color: white !important; 
+            margin: 0; 
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .hospital-header p { 
+            color: rgba(255,255,255,0.9) !important; 
+            margin: 0;
+        }
         .hospital-badge {
             background: rgba(255,255,255,0.2);
-            padding: 6px 16px;
+            padding: 6px 18px;
             border-radius: 20px;
             color: white !important;
             font-size: 0.8rem;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .hospital-footer {
-            background: white;
-            padding: 15px;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            padding: 18px;
             border-radius: 12px;
             text-align: center;
             color: #6c757d;
             margin-top: 30px;
-            border: 1px solid #e8ecf0;
+            border: 1px solid rgba(255,255,255,0.5);
         }
-        
-        /* Checkboxes */
-        .stCheckbox label { font-size: 15px !important; color: #1a1a2e !important; }
-        
-        /* Progress Bar */
+        .stCheckbox label { font-size: 15px !important; color: #1a1a2e !important; font-weight: 500 !important; }
         .stProgress > div > div {
             background: linear-gradient(90deg, #1976D2, #0D47A1) !important;
+            border-radius: 10px !important;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.5);
+            margin: 8px 0;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .step-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.3s;
+        }
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .stTable {
+            background: rgba(255,255,255,0.7) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 12px !important;
+            border: 1px solid rgba(255,255,255,0.5) !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -258,15 +363,14 @@ except Exception as e:
 with st.sidebar:
     st.markdown("""
     <div style="text-align:center; padding: 10px 0 20px 0;">
-        <div style="font-size:3rem;">🏥</div>
-        <h2 style="color:#0D47A1; margin:0;">MediAI</h2>
+        <div style="font-size:3.5rem;">🏥</div>
+        <h2 style="color:#0D47A1; margin:0; font-weight:700;">MediAI</h2>
         <p style="color:#6c757d; margin:0; font-size:0.9rem;">AI Disease Diagnosis</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # Model Statistics
     st.markdown("### 📊 Model Statistics")
     col1, col2 = st.columns(2)
     with col1:
@@ -277,14 +381,12 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Quick Navigation
     st.markdown("### 🚀 Quick Links")
     st.markdown("[🌐 Live App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)")
     st.markdown("[📂 GitHub](https://github.com/Thamizhmathi477/disease-project)")
 
     st.markdown("---")
 
-    # Developer Info
     st.markdown("### 👨‍💻 Developer")
     st.markdown("**Thamizhmathi Sivakumar**")
     st.markdown("Arunai Engineering College")
@@ -314,9 +416,9 @@ with col2:
 with col3:
     st.markdown('<div class="metric-card"><div class="metric-value">88%</div><div class="metric-label">📊 Accuracy</div></div>', unsafe_allow_html=True)
 with col4:
-    st.markdown('<div class="metric-card"><div class="metric-value">⚡</div><div class="metric-label">Instant</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="metric-card"><div class="metric-value">⚡</div><div class="metric-label">Real-Time</div></div>', unsafe_allow_html=True)
 with col5:
-    st.markdown('<div class="metric-card"><div class="metric-value">🛡️</div><div class="metric-label">Secure</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="metric-card"><div class="metric-value">🛡️</div><div class="metric-label">AI Powered</div></div>', unsafe_allow_html=True)
 
 # ---------- TABS ----------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -338,23 +440,23 @@ with tab1:
 
     ### 🎯 How It Works
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0;">
-        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-            <div style="font-size:2rem;">1️⃣</div>
+        <div class="step-card">
+            <div style="font-size:2.5rem;">1️⃣</div>
             <strong>Search</strong>
             <p style="font-size:0.9rem; color:#6c757d;">Find your symptoms</p>
         </div>
-        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-            <div style="font-size:2rem;">2️⃣</div>
+        <div class="step-card">
+            <div style="font-size:2.5rem;">2️⃣</div>
             <strong>Select</strong>
             <p style="font-size:0.9rem; color:#6c757d;">Choose all that apply</p>
         </div>
-        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-            <div style="font-size:2rem;">3️⃣</div>
+        <div class="step-card">
+            <div style="font-size:2.5rem;">3️⃣</div>
             <strong>Predict</strong>
             <p style="font-size:0.9rem; color:#6c757d;">Get instant diagnosis</p>
         </div>
-        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-            <div style="font-size:2rem;">4️⃣</div>
+        <div class="step-card">
+            <div style="font-size:2.5rem;">4️⃣</div>
             <strong>Report</strong>
             <p style="font-size:0.9rem; color:#6c757d;">Download results</p>
         </div>
@@ -363,36 +465,37 @@ with tab1:
 
     st.markdown("---")
     st.markdown("### ✨ Key Features")
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #1976D2; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>🏥 41 Diseases</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Comprehensive disease coverage</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #1976D2; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>🔬 131 Symptoms</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Extensive symptom library</span>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #43A047; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>🎯 88% Accuracy</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">High prediction confidence</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #43A047; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>⚡ Real-Time Results</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Instant diagnosis in seconds</span>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #FB8C00; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>📄 Download Reports</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Save diagnosis results</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #FB8C00; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div class="feature-card">
             <strong>🌙 Dark Mode</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Comfortable viewing</span>
         </div>
@@ -410,10 +513,8 @@ with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Select all symptoms that apply:")
 
-    # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
 
-    # Filter symptoms
     if search_term:
         filtered_features = [s for s in features if search_term.lower() in s.lower()]
     else:
@@ -421,7 +522,6 @@ with tab2:
 
     st.caption(f"Showing {len(filtered_features)} of {len(features)} symptoms")
 
-    # Symptom categories
     categories = {
         "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
         "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
@@ -433,7 +533,6 @@ with tab2:
 
     selected = []
 
-    # Show symptoms
     if search_term:
         cols = st.columns(4)
         for i, sym in enumerate(filtered_features):
@@ -451,19 +550,16 @@ with tab2:
                     if col.checkbox(sym.replace('_', ' ').title(), key=f"cat_{sym}"):
                         selected.append(sym)
 
-    # Show selected tags
     if selected:
         st.markdown("#### 📋 Selected Symptoms:")
         tags = "".join([f'<span class="symptom-tag">✅ {s.replace("_", " ").title()}</span>' for s in selected])
         st.markdown(tags, unsafe_allow_html=True)
 
-    # Predict button
     if st.button("🔍 Predict Disease", type="primary"):
         if not selected:
             st.warning("⚠️ Please select at least one symptom.")
         else:
             with st.spinner("🧠 Analyzing symptoms..."):
-                # Progress bar
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.005)
@@ -481,7 +577,6 @@ with tab2:
 
                 progress_bar.empty()
 
-                # ---------- RESULTS ----------
                 st.markdown("---")
                 st.markdown("## 📊 Diagnosis Result")
 
@@ -504,7 +599,6 @@ with tab2:
                     else:
                         st.markdown('<div class="risk-low">🟢 Low Risk - Take rest and stay hydrated</div>', unsafe_allow_html=True)
 
-                # Confidence Gauge
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=confidence,
@@ -528,12 +622,10 @@ with tab2:
                 fig.update_layout(height=250)
                 st.plotly_chart(fig, use_container_width=True)
 
-                # Emergency detection
                 emergency = ['chest_pain', 'shortness_breath', 'fainting', 'seizures']
                 if any(s in emergency for s in selected):
                     st.error("🚨 **Emergency symptoms detected!** Seek immediate medical attention.")
 
-                # Doctor recommendation
                 doctor_mapping = {
                     'Heart Attack': 'Cardiologist',
                     'Dengue': 'Infectious Disease Specialist',
@@ -625,7 +717,6 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
                     mime="text/plain"
                 )
 
-                # Save to history
                 st.session_state.history.append({
                     'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'symptoms': ', '.join(selected),
@@ -687,7 +778,6 @@ with tab3:
     plt.tight_layout()
     st.pyplot(fig)
 
-    # Symptom Distribution
     st.markdown("### 📋 Symptom Distribution")
     fig2, ax2 = plt.subplots(figsize=(10, 6))
     top_10 = importance_df.head(10)
