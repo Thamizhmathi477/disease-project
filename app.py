@@ -19,26 +19,19 @@ st.set_page_config(
 # ---------- SCROLL FIX – CSS ----------
 st.markdown("""
 <style>
-    /* Enable scrolling for the entire app */
     .main {
         overflow-y: auto !important;
         height: 100vh !important;
     }
-    
-    /* Ensure content container can scroll */
     .block-container {
         overflow-y: auto !important;
         max-height: 100vh !important;
         padding-bottom: 100px !important;
     }
-    
-    /* Sidebar scrolling */
     section[data-testid="stSidebar"] {
         overflow-y: auto !important;
         max-height: 100vh !important;
     }
-    
-    /* Custom scrollbar styling - light mode */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -71,7 +64,6 @@ st.session_state.dark_mode = dark_mode
 if dark_mode:
     st.markdown("""
     <style>
-        /* Dark Mode Base */
         .stApp { background: linear-gradient(135deg, #0a0e1a, #1a1a2e, #0a1628); }
         h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stTextInput label, .stCheckbox label {
             color: #e0e0e0 !important;
@@ -94,7 +86,6 @@ if dark_mode:
         .risk-medium { background: rgba(245,124,0,0.15) !important; border-left: 4px solid #F57C00 !important; color: #FFB74D !important; }
         .risk-low { background: rgba(56,142,60,0.15) !important; border-left: 4px solid #388E3C !important; color: #81C784 !important; }
 
-        /* ---- SIDEBAR DARK MODE FIXES ---- */
         section[data-testid="stSidebar"] {
             background: #0a0e1a !important;
             border-right: 1px solid rgba(255,255,255,0.05) !important;
@@ -128,20 +119,6 @@ if dark_mode:
         section[data-testid="stSidebar"] .stMarkdown a:hover {
             color: #90caf9 !important;
         }
-        section[data-testid="stSidebar"] .stSelectbox select {
-            background: #1a1a2e !important;
-            color: #e0e0e0 !important;
-            border-color: rgba(255,255,255,0.1) !important;
-        }
-        section[data-testid="stSidebar"] .stSelectbox option {
-            background: #1a1a2e !important;
-            color: #e0e0e0 !important;
-        }
-        section[data-testid="stSidebar"] .stToggle {
-            color: #e0e0e0 !important;
-        }
-
-        /* Fix scrollbar in dark mode */
         ::-webkit-scrollbar-track {
             background: #1a1a2e !important;
         }
@@ -556,7 +533,7 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION
+# TAB 2: DISEASE PREDICTION (With Highlight on Search)
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
@@ -565,13 +542,10 @@ with tab2:
     # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
 
-    # Filter symptoms
-    if search_term:
-        filtered_features = [s for s in features if search_term.lower() in s.lower()]
-    else:
-        filtered_features = features
+    # Determine if we need to highlight
+    highlight_matches = search_term != ""
 
-    st.caption(f"Showing {len(filtered_features)} of {len(features)} symptoms")
+    st.caption(f"Showing all {len(features)} symptoms" + (f" – matching symptoms marked with 🔍" if highlight_matches else ""))
 
     # Categories
     categories = {
@@ -585,25 +559,24 @@ with tab2:
 
     selected = []
 
-    # Show symptoms
-    if search_term:
-        cols = st.columns(4)
-        for i, sym in enumerate(filtered_features):
-            col = cols[i % 4]
-            if col.checkbox(sym.replace('_', ' ').title(), key=f"search_{sym}"):
-                selected.append(sym)
-    else:
-        for category, sym_list in categories.items():
-            category_symptoms = [s for s in sym_list if s in features]
-            if category_symptoms:
-                st.markdown(f"#### {category}")
-                cols = st.columns(4)
-                for i, sym in enumerate(category_symptoms):
-                    col = cols[i % 4]
-                    if col.checkbox(sym.replace('_', ' ').title(), key=f"cat_{sym}"):
-                        selected.append(sym)
+    # Build the display list
+    # If search term is not empty, we'll add a marker to matching symptoms
+    for category, sym_list in categories.items():
+        category_symptoms = [s for s in sym_list if s in features]
+        if category_symptoms:
+            st.markdown(f"#### {category}")
+            cols = st.columns(4)
+            for i, sym in enumerate(category_symptoms):
+                col = cols[i % 4]
+                # Prepare label
+                if highlight_matches and search_term.lower() in sym.lower():
+                    label = f"🔍 {sym.replace('_', ' ').title()}"
+                else:
+                    label = sym.replace('_', ' ').title()
+                if col.checkbox(label, key=f"cat_{sym}"):
+                    selected.append(sym)
 
-    # Selected tags
+    # Show selected tags
     if selected:
         st.markdown("#### 📋 Selected Symptoms:")
         tags = "".join([f'<span class="symptom-tag">✅ {s.replace("_", " ").title()}</span>' for s in selected])
