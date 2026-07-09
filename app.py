@@ -546,17 +546,18 @@ with tab3:
     """)
 
     # Feature Distribution
-    st.markdown("### 📋 Symptom Distribution")
-    fig2 = px.histogram(
-        importance_df.head(10),
-        x='Symptom',
-        y='Importance',
-        title='Top 10 Symptoms by Importance',
-        color='Importance',
-        color_continuous_scale='Blues'
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-
+    # Feature Distribution (using matplotlib)
+st.markdown("### 📋 Symptom Distribution")
+fig2, ax2 = plt.subplots(figsize=(10, 6))
+top_10 = importance_df.head(10)
+colors2 = plt.cm.Blues(np.linspace(0.4, 0.9, len(top_10)))
+ax2.bar(top_10['Symptom'], top_10['Importance'], color=colors2)
+ax2.set_xlabel('Symptom', fontsize=12)
+ax2.set_ylabel('Importance', fontsize=12)
+ax2.set_title('Top 10 Symptoms by Importance', fontsize=14)
+ax2.tick_params(axis='x', rotation=45, labelsize=10)
+plt.tight_layout()
+st.pyplot(fig2)
 # ============================================
 # TAB 4: HISTORY
 # ============================================
