@@ -15,6 +15,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # ---------- SCROLL FIX – CSS ----------
 st.markdown("""
 <style>
@@ -532,76 +533,80 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION – EXPANDABLE CATEGORIES
+# TAB 2: DISEASE PREDICTION – EXPANDED KEYWORDS
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Click a category below to expand and select symptoms:")
 
-    # ---------- COMPLETE CATEGORY MAPPING ----------
-    categories = {
+    # ---------- EXPANDED KEYWORD MAPPING ----------
+    category_keywords = {
         "🌡️ General": [
-            "fever", "fatigue", "chills", "sweating", "weakness", "weight_loss",
-            "mild_fever", "high_fever", "lethargy", "malaise", "restlessness",
-            "fluid_overload", "weight_gain", "loss_of_appetite", "increased_appetite"
+            "fever", "fatigue", "chills", "sweating", "weakness", "weight",
+            "lethargy", "malaise", "restlessness", "fluid", "appetite",
+            "thyroid", "depression", "menstruation", "mild", "high",
+            "general", "malaise", "enlarged", "swelling", "wasting"
         ],
-        
         "🫁 Respiratory": [
-            "cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose",
-            "phlegm", "rusty_sputum", "sinus_pressure", "breathlessness",
-            "congestion", "wheezing", "coughing_blood", "nasal_congestion"
+            "cough", "breath", "chest", "sore_throat", "runny_nose",
+            "phlegm", "sputum", "sinus", "congestion", "wheezing",
+            "respiratory", "lung", "pneumonia", "asthma"
         ],
-        
         "🤕 Pain": [
-            "headache", "body_ache", "muscle_pain", "joint_pain", "back_pain",
-            "abdominal_pain", "pain_in_anal_region", "painful_walking",
-            "chest_pain", "cramps", "stomach_pain", "neck_pain"
+            "pain", "ache", "headache", "body_ache", "muscle", "joint",
+            "back", "abdominal", "cramps", "stomach", "neck", "anal",
+            "walking", "burning", "cramp"
         ],
-        
         "💊 Digestive": [
-            "nausea", "vomiting", "diarrhea", "abdominal_pain", "loss_appetite",
-            "constipation", "acidity", "passage_of_gases", "bloating",
-            "indigestion", "heartburn", "ulcer", "gastrointestinal_bleeding"
+            "nausea", "vomiting", "diarrhea", "constipation", "acidity",
+            "gas", "bloating", "indigestion", "heartburn", "ulcer",
+            "passage", "gastrointestinal", "stool"
         ],
-        
         "🧠 Neurological": [
-            "dizziness", "confusion", "numbness", "tingling", "tremors",
-            "slurred_speech", "visual_disturbances", "spinning_movements",
-            "memory_loss", "seizures", "fainting", "headache", "migraine"
+            "dizziness", "confusion", "numb", "tingling", "tremor",
+            "slurred", "visual", "spinning", "memory", "seizure",
+            "fainting", "headache", "migraine", "speech", "movement"
         ],
-        
         "🩸 Skin": [
-            "rash", "itching", "hives", "dry_skin", "jaundice",
-            "skin_rash", "nodal_skin_eruptions", "dischromic_patches",
-            "yellow_crust_ooze", "silver_like_dusting", "small_dents_in_nails",
-            "blister", "drying_and_tingling_lips", "yellow_urine",
-            "dark_urine", "foul_smell_of_urine", "burning_micturition",
-            "watering_from_eyes", "irritation_in_anus", "enlarged_thyroid",
-            "swelling_of_stomach", "muscle_wasting", "weakness_in_limbs",
-            "abnormal_menstruation", "depression", "toxic_look_typhos"
+            "rash", "itch", "hives", "dry_skin", "jaundice", "skin",
+            "patch", "crust", "silver", "dents", "blister", "lips",
+            "urine", "burning", "watering", "irritation", "ooze",
+            "dusting", "yellow", "toxic", "nodal", "dischromic"
         ]
     }
 
-    # Add "Other" category for any remaining symptoms
-    all_categorized = set()
-    for sym_list in categories.values():
-        all_categorized.update(sym_list)
-    remaining = [s for s in features if s not in all_categorized]
+    # Build categories
+    categorized = {cat: [] for cat in category_keywords}
+    remaining = []
+
+    for sym in features:
+        matched = False
+        sym_lower = sym.lower()
+        for cat, keywords in category_keywords.items():
+            if any(keyword in sym_lower for keyword in keywords):
+                categorized[cat].append(sym)
+                matched = True
+                break
+        if not matched:
+            remaining.append(sym)
+
+    # Add "Other" category if there are remaining symptoms
     if remaining:
-        categories["🔸 Other"] = remaining
+        categorized["🔸 Other"] = remaining
+
+    # Remove empty categories
+    categories = {cat: syms for cat, syms in categorized.items() if syms}
+
+    # For debugging, you can uncomment the next line to see category counts
+    # st.write({cat: len(syms) for cat, syms in categories.items()})
 
     selected = []
 
-    # Display each category as an expandable section
+    # Display each category as an expander
     for category, sym_list in categories.items():
-        available = [s for s in sym_list if s in features]
-        if not available:
-            continue
-
-        # Create expander for this category
-        with st.expander(f"{category} ({len(available)} symptoms)"):
+        with st.expander(f"{category} ({len(sym_list)} symptoms)"):
             cols = st.columns(4)
-            for i, sym in enumerate(available):
+            for i, sym in enumerate(sym_list):
                 col = cols[i % 4]
                 display_name = sym.replace('_', ' ').title()
                 if col.checkbox(display_name, key=f"cat_{sym}"):
