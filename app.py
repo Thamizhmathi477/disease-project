@@ -469,12 +469,12 @@ with tab1:
         <div class="step-card">
             <div style="font-size:2.5rem;">1️⃣</div>
             <strong>Browse</strong>
-            <p style="font-size:0.9rem; color:#6c757d;">Explore symptoms by category</p>
+            <p style="font-size:0.9rem; color:#6c757d;">Click a category to expand</p>
         </div>
         <div class="step-card">
             <div style="font-size:2.5rem;">2️⃣</div>
             <strong>Select</strong>
-            <p style="font-size:0.9rem; color:#6c757d;">Choose all that apply</p>
+            <p style="font-size:0.9rem; color:#6c757d;">Choose all symptoms that apply</p>
         </div>
         <div class="step-card">
             <div style="font-size:2.5rem;">3️⃣</div>
@@ -533,11 +533,11 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION – CATEGORIES ONLY (NO SEARCH)
+# TAB 2: DISEASE PREDICTION – EXPANDABLE CATEGORIES
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
-    st.markdown("### Browse symptoms by category and select all that apply:")
+    st.markdown("### Click a category below to expand and select symptoms:")
 
     # Categories
     categories = {
@@ -559,20 +559,22 @@ with tab2:
 
     selected = []
 
-    # Display all categories and symptoms
+    # Display each category as an expandable section
     for category, sym_list in categories.items():
         available = [s for s in sym_list if s in features]
         if not available:
             continue
-        st.markdown(f"#### {category}")
-        cols = st.columns(4)
-        for i, sym in enumerate(available):
-            col = cols[i % 4]
-            display_name = sym.replace('_', ' ').title()
-            if col.checkbox(display_name, key=f"cat_{sym}"):
-                selected.append(sym)
 
-    st.caption(f"📊 {len(features)} total symptoms available")
+        # Create expander for this category
+        with st.expander(f"{category} ({len(available)} symptoms)"):
+            cols = st.columns(4)
+            for i, sym in enumerate(available):
+                col = cols[i % 4]
+                display_name = sym.replace('_', ' ').title()
+                if col.checkbox(display_name, key=f"cat_{sym}"):
+                    selected.append(sym)
+
+    st.caption(f"📊 {len(features)} total symptoms across all categories")
 
     # Show selected tags
     if selected:
