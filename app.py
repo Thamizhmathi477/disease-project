@@ -7,7 +7,6 @@ import seaborn as sns
 from datetime import datetime
 import time
 import plotly.graph_objects as go
-import plotly.express as px
 
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
@@ -17,23 +16,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------- SESSION STATE INITIALIZATION ----------
+# ---------- SESSION STATE ----------
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 if 'history' not in st.session_state:
     st.session_state.history = []
-if 'patient_name' not in st.session_state:
-    st.session_state.patient_name = ""
 
 # ---------- DARK MODE TOGGLE ----------
 dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
 st.session_state.dark_mode = dark_mode
 
-# ---------- CSS STYLING ----------
+# ---------- CSS STYLING - HOSPITAL THEME ----------
 if dark_mode:
     st.markdown("""
     <style>
-        /* Dark Mode */
         .stApp { background-color: #0a0e1a; }
         h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stTextInput label, .stCheckbox label {
             color: #e0e0e0 !important;
@@ -51,29 +47,194 @@ if dark_mode:
         .footer { border-top-color: #1a1a2e !important; color: #a0a0a0 !important; }
         .stTextInput input { background-color: #1a1a2e !important; color: #e0e0e0 !important; border-color: #1976D2 !important; }
         .stSelectbox select { background-color: #1a1a2e !important; color: #e0e0e0 !important; }
-        .stDateInput input { background-color: #1a1a2e !important; color: #e0e0e0 !important; }
+        .hospital-header { background: linear-gradient(135deg, #0a1628, #1a2a4a) !important; }
+        .hospital-footer { background: #0a1628 !important; color: #a0a0a0 !important; }
     </style>
     """, unsafe_allow_html=True)
 else:
     st.markdown("""
     <style>
-        /* Light Mode */
-        .stApp { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-        h1, h2, h3, h4, h5, h6, p, li, .stMarkdown { color: #1a1a2e !important; }
-        .stTabs [data-baseweb="tab-list"] { background-color: #e8ecf0; border-radius: 10px; }
-        .stTabs [data-baseweb="tab"] { background-color: white; color: #0D47A1 !important; border-color: #BBDEFB; }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #1976D2; color: white !important; }
-        .metric-card { background: white !important; border-color: #e8ecf0 !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-        .metric-value { color: #0D47A1 !important; }
-        .metric-label { color: #6c757d !important; }
-        .diagnosis-box { background: linear-gradient(135deg, #E3F2FD, #BBDEFB) !important; border-left-color: #1976D2 !important; }
-        .diagnosis-box h2 { color: #0D47A1 !important; }
-        .diagnosis-box p { color: #1a1a2e !important; }
-        .symptom-tag { background: #E3F2FD !important; color: #0D47A1 !important; border-color: #BBDEFB !important; }
-        .footer { border-top-color: #e8ecf0 !important; color: #6c757d !important; }
-        .stTextInput input { border-color: #1976D2 !important; }
-        .stSelectbox select { border-color: #1976D2 !important; }
-        .stDateInput input { border-color: #1976D2 !important; }
+        /* Hospital Theme - Clean White & Blue */
+        .stApp { background: #f0f4f8; }
+        
+        /* Headers */
+        h1, h2, h3, h4, h5, h6 { color: #0D47A1 !important; font-weight: 600 !important; }
+        p, li, .stMarkdown { color: #1a1a2e !important; }
+        
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stTabs [data-baseweb="tab"] { 
+            background: transparent; 
+            color: #0D47A1 !important; 
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] { 
+            background: #1976D2; 
+            color: white !important; 
+        }
+        
+        /* Metric Cards */
+        .metric-card { 
+            background: white !important; 
+            border-radius: 16px !important;
+            padding: 20px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+            border: none !important;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover { transform: translateY(-4px); }
+        .metric-value { color: #0D47A1 !important; font-size: 2.2rem !important; }
+        .metric-label { color: #6c757d !important; font-size: 0.9rem !important; }
+        
+        /* Diagnosis Box */
+        .diagnosis-box { 
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB) !important; 
+            border-radius: 16px !important;
+            padding: 25px !important;
+            border-left: 6px solid #1976D2 !important;
+            box-shadow: 0 4px 16px rgba(25,118,210,0.15) !important;
+        }
+        .diagnosis-box h2 { color: #0D47A1 !important; font-size: 32px !important; }
+        .diagnosis-box p { color: #1a1a2e !important; font-size: 18px !important; }
+        
+        /* Risk Indicators */
+        .risk-high { 
+            background: #FFEBEE; 
+            color: #D32F2F !important; 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 18px; 
+            border-left: 5px solid #D32F2F;
+            box-shadow: 0 2px 8px rgba(211,47,47,0.12);
+        }
+        .risk-medium { 
+            background: #FFF3E0; 
+            color: #F57C00 !important; 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 18px; 
+            border-left: 5px solid #F57C00;
+            box-shadow: 0 2px 8px rgba(245,124,0,0.12);
+        }
+        .risk-low { 
+            background: #E8F5E9; 
+            color: #388E3C !important; 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 18px; 
+            border-left: 5px solid #388E3C;
+            box-shadow: 0 2px 8px rgba(56,142,60,0.12);
+        }
+        
+        /* Symptom Tags */
+        .symptom-tag { 
+            background: #E3F2FD !important; 
+            color: #0D47A1 !important; 
+            padding: 6px 16px; 
+            border-radius: 20px; 
+            font-size: 14px; 
+            margin: 4px; 
+            display: inline-block; 
+            border: 1px solid #BBDEFB !important;
+            font-weight: 500;
+        }
+        
+        /* Buttons */
+        .stButton button { 
+            background: linear-gradient(135deg, #1976D2, #0D47A1) !important; 
+            color: white !important; 
+            font-size: 18px !important; 
+            font-weight: 600 !important; 
+            border-radius: 12px !important; 
+            padding: 12px 30px !important; 
+            border: none !important; 
+            width: 100% !important;
+            box-shadow: 0 4px 16px rgba(25,118,210,0.25) !important;
+            transition: all 0.3s !important;
+        }
+        .stButton button:hover { 
+            transform: scale(1.02);
+            box-shadow: 0 6px 24px rgba(25,118,210,0.35) !important;
+        }
+        
+        /* Search Bar */
+        .stTextInput input { 
+            border: 2px solid #1976D2 !important; 
+            border-radius: 12px !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+            background: white !important;
+        }
+        .stTextInput input:focus { 
+            border-color: #0D47A1 !important; 
+            box-shadow: 0 0 0 3px rgba(25,118,210,0.15) !important;
+        }
+        
+        /* Footer */
+        .footer { 
+            text-align: center; 
+            color: #6c757d; 
+            padding: 20px; 
+            border-top: 1px solid #e0e0e0; 
+            margin-top: 30px; 
+            font-size: 14px;
+            background: white;
+            border-radius: 12px;
+        }
+        
+        /* Sidebar */
+        .css-1d391kg, .css-163i3l4 {
+            background: white !important;
+            border-right: 1px solid #e8ecf0 !important;
+        }
+        
+        /* Hospital Header */
+        .hospital-header {
+            background: linear-gradient(135deg, #0D47A1, #1565C0);
+            padding: 20px 30px;
+            border-radius: 16px;
+            color: white;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(13,71,161,0.25);
+        }
+        .hospital-header h1 { color: white !important; margin: 0; font-size: 2rem; }
+        .hospital-header p { color: rgba(255,255,255,0.85) !important; margin: 0; }
+        .hospital-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: white !important;
+            font-size: 0.8rem;
+        }
+        .hospital-footer {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            color: #6c757d;
+            margin-top: 30px;
+            border: 1px solid #e8ecf0;
+        }
+        
+        /* Checkboxes */
+        .stCheckbox label { font-size: 15px !important; color: #1a1a2e !important; }
+        
+        /* Progress Bar */
+        .stProgress > div > div {
+            background: linear-gradient(90deg, #1976D2, #0D47A1) !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -96,25 +257,16 @@ except Exception as e:
 # ---------- SIDEBAR ----------
 with st.sidebar:
     st.markdown("""
-    <div style="text-align:center; padding: 10px;">
-        <h1 style="font-size:2.5rem; margin:0;">🏥</h1>
-        <h2 style="margin:0; color:#1976D2;">MediAI</h2>
-        <p style="margin:0; opacity:0.7;">AI Disease Diagnosis</p>
+    <div style="text-align:center; padding: 10px 0 20px 0;">
+        <div style="font-size:3rem;">🏥</div>
+        <h2 style="color:#0D47A1; margin:0;">MediAI</h2>
+        <p style="color:#6c757d; margin:0; font-size:0.9rem;">AI Disease Diagnosis</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # Patient Information
-    st.markdown("### 👤 Patient Details")
-    st.session_state.patient_name = st.text_input("Name", placeholder="Enter patient name")
-    age = st.number_input("Age", min_value=1, max_value=120, value=25)
-    gender = st.selectbox("Gender", ["Select", "Male", "Female", "Other"])
-    date = st.date_input("Date", datetime.now())
-
-    st.markdown("---")
-
-    # Model Info
+    # Model Statistics
     st.markdown("### 📊 Model Statistics")
     col1, col2 = st.columns(2)
     with col1:
@@ -125,23 +277,33 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # Quick Navigation
+    st.markdown("### 🚀 Quick Links")
+    st.markdown("[🌐 Live App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)")
+    st.markdown("[📂 GitHub](https://github.com/Thamizhmathi477/disease-project)")
+
+    st.markdown("---")
+
     # Developer Info
     st.markdown("### 👨‍💻 Developer")
     st.markdown("**Thamizhmathi Sivakumar**")
     st.markdown("Arunai Engineering College")
     st.markdown("CSE · Third Year (2026)")
+    st.markdown("📍 Thiruvannamalai")
 
-    st.markdown("---")
-
-    # Quick Links
-    st.markdown("### 🔗 Quick Links")
-    st.markdown("[🌐 Live App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)")
-    st.markdown("[📂 GitHub](https://github.com/Thamizhmathi477/disease-project)")
-
-# ---------- MAIN CONTENT ----------
-st.title("🏥 MediAI – Disease Diagnosis System")
-st.markdown("*AI-Powered Healthcare Assistant*")
-st.markdown("---")
+# ---------- HOSPITAL HEADER ----------
+st.markdown("""
+<div class="hospital-header">
+    <div>
+        <h1>🏥 MediAI</h1>
+        <p>AI-Powered Disease Diagnosis System</p>
+    </div>
+    <div>
+        <span class="hospital-badge">🟢 Live</span>
+        <span class="hospital-badge" style="margin-left:8px;">v2.0</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------- METRICS ROW ----------
 col1, col2, col3, col4, col5 = st.columns(5)
@@ -152,9 +314,9 @@ with col2:
 with col3:
     st.markdown('<div class="metric-card"><div class="metric-value">88%</div><div class="metric-label">📊 Accuracy</div></div>', unsafe_allow_html=True)
 with col4:
-    st.markdown('<div class="metric-card"><div class="metric-value">✅</div><div class="metric-label">🟢 Live</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="metric-card"><div class="metric-value">⚡</div><div class="metric-label">Instant</div></div>', unsafe_allow_html=True)
 with col5:
-    st.markdown('<div class="metric-card"><div class="metric-value">🌟</div><div class="metric-label">📈 Random Forest</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="metric-card"><div class="metric-value">🛡️</div><div class="metric-label">Secure</div></div>', unsafe_allow_html=True)
 
 # ---------- TABS ----------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -172,67 +334,70 @@ with tab1:
     st.markdown("""
     ## 👋 Welcome to MediAI
 
-    **MediAI** is an AI-powered disease diagnosis system that uses machine learning to predict diseases based on your symptoms.
+    **MediAI** is an intelligent healthcare assistant that uses machine learning to predict diseases from symptoms.
 
     ### 🎯 How It Works
-    <div style="display:flex; gap:20px; flex-wrap:wrap; margin:20px 0;">
-        <div style="background:#E3F2FD; padding:15px; border-radius:10px; flex:1; min-width:150px; text-align:center;">
-            <h2 style="margin:0;">1️⃣</h2>
-            <p><strong>Search</strong><br>Find your symptoms</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0;">
+        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+            <div style="font-size:2rem;">1️⃣</div>
+            <strong>Search</strong>
+            <p style="font-size:0.9rem; color:#6c757d;">Find your symptoms</p>
         </div>
-        <div style="background:#E3F2FD; padding:15px; border-radius:10px; flex:1; min-width:150px; text-align:center;">
-            <h2 style="margin:0;">2️⃣</h2>
-            <p><strong>Select</strong><br>Choose all that apply</p>
+        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+            <div style="font-size:2rem;">2️⃣</div>
+            <strong>Select</strong>
+            <p style="font-size:0.9rem; color:#6c757d;">Choose all that apply</p>
         </div>
-        <div style="background:#E3F2FD; padding:15px; border-radius:10px; flex:1; min-width:150px; text-align:center;">
-            <h2 style="margin:0;">3️⃣</h2>
-            <p><strong>Predict</strong><br>Get instant diagnosis</p>
+        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+            <div style="font-size:2rem;">3️⃣</div>
+            <strong>Predict</strong>
+            <p style="font-size:0.9rem; color:#6c757d;">Get instant diagnosis</p>
         </div>
-        <div style="background:#E3F2FD; padding:15px; border-radius:10px; flex:1; min-width:150px; text-align:center;">
-            <h2 style="margin:0;">4️⃣</h2>
-            <p><strong>Report</strong><br>Download results</p>
+        <div style="background:white; padding:20px; border-radius:12px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+            <div style="font-size:2rem;">4️⃣</div>
+            <strong>Report</strong>
+            <p style="font-size:0.9rem; color:#6c757d;">Download results</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Features grid
+    st.markdown("---")
     st.markdown("### ✨ Key Features")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #1976D2; margin:5px 0;">
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #1976D2; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
             <strong>🏥 41 Diseases</strong><br>
-            <span style="font-size:0.9rem; color:#6c757d;">Comprehensive coverage</span>
+            <span style="font-size:0.9rem; color:#6c757d;">Comprehensive disease coverage</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #1976D2; margin:5px 0;">
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #1976D2; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
             <strong>🔬 131 Symptoms</strong><br>
-            <span style="font-size:0.9rem; color:#6c757d;">Extensive symptom list</span>
+            <span style="font-size:0.9rem; color:#6c757d;">Extensive symptom library</span>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #43A047; margin:5px 0;">
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #43A047; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
             <strong>🎯 88% Accuracy</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">High prediction confidence</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #43A047; margin:5px 0;">
-            <strong>⚡ Instant Results</strong><br>
-            <span style="font-size:0.9rem; color:#6c757d;">Real-time diagnosis</span>
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #43A047; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+            <strong>⚡ Real-Time Results</strong><br>
+            <span style="font-size:0.9rem; color:#6c757d;">Instant diagnosis in seconds</span>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown("""
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #FB8C00; margin:5px 0;">
-            <strong>📄 Reports</strong><br>
-            <span style="font-size:0.9rem; color:#6c757d;">Downloadable diagnosis</span>
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #FB8C00; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+            <strong>📄 Download Reports</strong><br>
+            <span style="font-size:0.9rem; color:#6c757d;">Save diagnosis results</span>
         </div>
-        <div style="background:white; padding:15px; border-radius:10px; border-left:4px solid #FB8C00; margin:5px 0;">
+        <div style="background:white; padding:15px; border-radius:12px; border-left:4px solid #FB8C00; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
             <strong>🌙 Dark Mode</strong><br>
             <span style="font-size:0.9rem; color:#6c757d;">Comfortable viewing</span>
         </div>
         """, unsafe_allow_html=True)
 
-    # Disclaimer
     st.warning("""
     ⚠️ **Disclaimer:** This is an educational project for preliminary diagnosis only.  
     Always consult a healthcare professional for accurate medical advice.
@@ -382,14 +547,7 @@ with tab2:
                     'Peptic Ulcer Disease': 'Gastroenterologist',
                     'Hypothyroidism': 'Endocrinologist',
                     'Hyperthyroidism': 'Endocrinologist',
-                    'Hypertension': 'Cardiologist',
-                    'Malaria': 'Infectious Disease Specialist',
-                    'Typhoid': 'Infectious Disease Specialist',
-                    'Tuberculosis': 'Pulmonologist',
-                    'Pneumonia': 'Pulmonologist',
-                    'Bronchitis': 'Pulmonologist',
-                    'Common Cold': 'General Physician',
-                    'Influenza': 'General Physician'
+                    'Hypertension': 'Cardiologist'
                 }
 
                 if disease in doctor_mapping:
@@ -405,7 +563,6 @@ with tab2:
                     - Consult a doctor
                     - Take prescribed medicines
                     - Do not self-medicate
-                    - Follow dosage instructions
                     """)
                 with rec_col2:
                     st.markdown("""
@@ -413,15 +570,13 @@ with tab2:
                     - Get plenty of rest
                     - Stay hydrated
                     - Monitor symptoms
-                    - Maintain hygiene
                     """)
                 with rec_col3:
                     st.markdown("""
                     **🥗 Diet & Lifestyle**
                     - Eat nutritious food
                     - Avoid processed foods
-                    - Exercise regularly
-                    - Sleep 7-8 hours
+                    - Maintain good hygiene
                     """)
 
                 st.markdown("---")
@@ -432,10 +587,7 @@ with tab2:
          MEDIAI DIAGNOSIS REPORT
 =====================================
 
-Patient Name: {st.session_state.patient_name if st.session_state.patient_name else 'Not Provided'}
-Age: {age}
-Gender: {gender}
-Date: {date.strftime('%Y-%m-%d')}
+Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}
 
 -------------------------------------
       DIAGNOSIS RESULTS
@@ -476,7 +628,6 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
                 # Save to history
                 st.session_state.history.append({
                     'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                    'patient': st.session_state.patient_name if st.session_state.patient_name else 'Unknown',
                     'symptoms': ', '.join(selected),
                     'disease': disease,
                     'confidence': f"{confidence:.2f}%"
@@ -493,8 +644,8 @@ with tab3:
     with col1:
         st.markdown("### 🎯 Model Performance")
         performance_data = pd.DataFrame({
-            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'AUC-ROC'],
-            'Score': ['88%', '89%', '87%', '88%', '0.91']
+            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+            'Score': ['88%', '89%', '87%', '88%']
         })
         st.table(performance_data)
 
@@ -508,14 +659,12 @@ with tab3:
         | n_estimators | 50 |
         | max_depth | 15 |
         | random_state | 42 |
-        | n_jobs | -1 |
 
         **Why Random Forest?**
         - ✅ Ensemble method
         - ✅ Reduces overfitting
         - ✅ Handles high-dimensional data
         - ✅ Feature importance available
-        - ✅ Fast prediction
         """)
 
     st.markdown("---")
@@ -538,26 +687,19 @@ with tab3:
     plt.tight_layout()
     st.pyplot(fig)
 
-    # Confusion Matrix
-    st.markdown("### 📊 Confusion Matrix")
-    st.markdown("""
-    *The confusion matrix shows how well the model performs across all diseases.*
-    *Green = correct predictions, Red = incorrect predictions.*
-    """)
+    # Symptom Distribution
+    st.markdown("### 📋 Symptom Distribution")
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    top_10 = importance_df.head(10)
+    colors2 = plt.cm.Blues(np.linspace(0.4, 0.9, len(top_10)))
+    ax2.bar(top_10['Symptom'], top_10['Importance'], color=colors2)
+    ax2.set_xlabel('Symptom', fontsize=12)
+    ax2.set_ylabel('Importance', fontsize=12)
+    ax2.set_title('Top 10 Symptoms by Importance', fontsize=14)
+    ax2.tick_params(axis='x', rotation=45, labelsize=10)
+    plt.tight_layout()
+    st.pyplot(fig2)
 
-    # Feature Distribution
-    # Feature Distribution (using matplotlib)
-st.markdown("### 📋 Symptom Distribution")
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-top_10 = importance_df.head(10)
-colors2 = plt.cm.Blues(np.linspace(0.4, 0.9, len(top_10)))
-ax2.bar(top_10['Symptom'], top_10['Importance'], color=colors2)
-ax2.set_xlabel('Symptom', fontsize=12)
-ax2.set_ylabel('Importance', fontsize=12)
-ax2.set_title('Top 10 Symptoms by Importance', fontsize=14)
-ax2.tick_params(axis='x', rotation=45, labelsize=10)
-plt.tight_layout()
-st.pyplot(fig2)
 # ============================================
 # TAB 4: HISTORY
 # ============================================
@@ -570,7 +712,6 @@ with tab4:
         history_df = pd.DataFrame(st.session_state.history)
         st.dataframe(history_df, use_container_width=True)
 
-        # Download history
         if st.button("📥 Download History as CSV"):
             csv = history_df.to_csv(index=False)
             st.download_button(
@@ -579,20 +720,6 @@ with tab4:
                 file_name="diagnosis_history.csv",
                 mime="text/csv"
             )
-
-    st.markdown("---")
-    st.markdown("### 📊 Summary Statistics")
-    if st.session_state.history:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Diagnoses", len(st.session_state.history))
-        with col2:
-            diseases_list = [h['disease'] for h in st.session_state.history]
-            most_common = max(set(diseases_list), key=diseases_list.count) if diseases_list else "N/A"
-            st.metric("Most Common Disease", most_common)
-        with col3:
-            avg_confidence = np.mean([float(h['confidence'].replace('%', '')) for h in st.session_state.history])
-            st.metric("Average Confidence", f"{avg_confidence:.1f}%")
 
 # ============================================
 # TAB 5: ABOUT
@@ -615,7 +742,6 @@ with tab5:
     | **Data Processing** | Pandas, NumPy |
     | **Model Serialization** | Joblib |
     | **Deployment** | Streamlit Cloud |
-    | **Version Control** | GitHub |
 
     ### 👨‍💻 Developer
 
@@ -628,7 +754,6 @@ with tab5:
     ### 🔗 Links
     - 🌐 [Live App](https://disease-project-r8ecaz25yrcwcr2dbkudnp.streamlit.app/)
     - 📂 [GitHub Repository](https://github.com/Thamizhmathi477/disease-project)
-    - 🔗 [LinkedIn](https://linkedin.com/in/Thamizhmathi Sivakumar)
 
     ### 📚 References
     1. Dahiwade, D., et al. (2019). "Designing Disease Prediction Model Using Machine Learning Approach." *ICCMC*.
@@ -637,10 +762,9 @@ with tab5:
     4. Chen, M., et al. (2017). "Disease Prediction by Machine Learning Over Big Data." *IEEE Access*.
     """)
 
-# ---------- FOOTER ----------
-st.markdown("---")
-st.markdown(f"""
-<div class="footer">
+# ---------- HOSPITAL FOOTER ----------
+st.markdown("""
+<div class="hospital-footer">
     ⚠️ <strong>Disclaimer:</strong> Educational purposes only. Not a substitute for professional medical advice.<br>
     © 2026 MediAI | Developed by Thamizhmathi Sivakumar | Arunai Engineering College
 </div>
