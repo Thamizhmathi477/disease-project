@@ -468,8 +468,8 @@ with tab1:
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:15px; margin:20px 0;">
         <div class="step-card">
             <div style="font-size:2.5rem;">1️⃣</div>
-            <strong>Search</strong>
-            <p style="font-size:0.9rem; color:#6c757d;">Find your symptoms</p>
+            <strong>Browse</strong>
+            <p style="font-size:0.9rem; color:#6c757d;">Explore symptoms by category</p>
         </div>
         <div class="step-card">
             <div style="font-size:2.5rem;">2️⃣</div>
@@ -533,21 +533,11 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION – ALL CATEGORIES ALWAYS VISIBLE
+# TAB 2: DISEASE PREDICTION – CATEGORIES ONLY (NO SEARCH)
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
-    st.markdown("### Select all symptoms that apply:")
-
-    # Search bar
-    search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
-
-    # Show count of matching symptoms
-    if search_term:
-        match_count = sum(1 for s in features if search_term.lower() in s.lower())
-        st.caption(f"🔍 {match_count} symptoms match your search (out of {len(features)} total)")
-    else:
-        st.caption(f"Showing all {len(features)} symptoms")
+    st.markdown("### Browse symptoms by category and select all that apply:")
 
     # Categories
     categories = {
@@ -559,7 +549,7 @@ with tab2:
         "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
     }
 
-    # Add "Other" category for symptoms not in any category
+    # Add "Other" category for any remaining symptoms
     all_categorized = set()
     for sym_list in categories.values():
         all_categorized.update(sym_list)
@@ -569,9 +559,8 @@ with tab2:
 
     selected = []
 
-    # Display all categories and symptoms with highlight on search
+    # Display all categories and symptoms
     for category, sym_list in categories.items():
-        # Only show categories that have symptoms in the dataset
         available = [s for s in sym_list if s in features]
         if not available:
             continue
@@ -580,24 +569,10 @@ with tab2:
         for i, sym in enumerate(available):
             col = cols[i % 4]
             display_name = sym.replace('_', ' ').title()
-            # Check if this symptom matches the search
-            if search_term and search_term.lower() in sym.lower():
-                # Highlight the matching part
-                lower_sym = sym.lower()
-                lower_search = search_term.lower()
-                idx = lower_sym.find(lower_search)
-                if idx != -1:
-                    before = sym[:idx].replace('_', ' ').title()
-                    match = sym[idx:idx+len(search_term)].replace('_', ' ').title()
-                    after = sym[idx+len(search_term):].replace('_', ' ').title()
-                    label = f"🔍 {before}<span style='background-color: #FFEB3B; font-weight: bold; color: #0D47A1;'>{match}</span>{after}"
-                else:
-                    label = f"🔍 {display_name}"
-                if col.checkbox(label, key=f"cat_{sym}"):
-                    selected.append(sym)
-            else:
-                if col.checkbox(display_name, key=f"cat_{sym}"):
-                    selected.append(sym)
+            if col.checkbox(display_name, key=f"cat_{sym}"):
+                selected.append(sym)
+
+    st.caption(f"📊 {len(features)} total symptoms available")
 
     # Show selected tags
     if selected:
