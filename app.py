@@ -38,7 +38,7 @@ st.markdown("""
         max-height: 100vh !important;
     }
     
-    /* Custom scrollbar styling */
+    /* Custom scrollbar styling - light mode */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -53,16 +53,6 @@ st.markdown("""
     }
     ::-webkit-scrollbar-thumb:hover {
         background: #0D47A1;
-    }
-    
-    /* Dark mode scrollbar */
-    @media (prefers-color-scheme: dark) {
-        ::-webkit-scrollbar-track {
-            background: #1a1a2e;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1976D2;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -81,6 +71,7 @@ st.session_state.dark_mode = dark_mode
 if dark_mode:
     st.markdown("""
     <style>
+        /* Dark Mode Base */
         .stApp { background: linear-gradient(135deg, #0a0e1a, #1a1a2e, #0a1628); }
         h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stTextInput label, .stCheckbox label {
             color: #e0e0e0 !important;
@@ -102,6 +93,64 @@ if dark_mode:
         .risk-high { background: rgba(211,47,47,0.15) !important; border-left: 4px solid #D32F2F !important; color: #FF6B6B !important; }
         .risk-medium { background: rgba(245,124,0,0.15) !important; border-left: 4px solid #F57C00 !important; color: #FFB74D !important; }
         .risk-low { background: rgba(56,142,60,0.15) !important; border-left: 4px solid #388E3C !important; color: #81C784 !important; }
+
+        /* ---- SIDEBAR DARK MODE FIXES ---- */
+        section[data-testid="stSidebar"] {
+            background: #0a0e1a !important;
+            border-right: 1px solid rgba(255,255,255,0.05) !important;
+        }
+        section[data-testid="stSidebar"] * {
+            color: #e0e0e0 !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown {
+            color: #e0e0e0 !important;
+        }
+        section[data-testid="stSidebar"] .stMetric {
+            background: rgba(255,255,255,0.05) !important;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        section[data-testid="stSidebar"] .stMetric label {
+            color: #a0a0a0 !important;
+        }
+        section[data-testid="stSidebar"] .stMetric .stMetricValue {
+            color: #4fc3f7 !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown h1,
+        section[data-testid="stSidebar"] .stMarkdown h2,
+        section[data-testid="stSidebar"] .stMarkdown h3,
+        section[data-testid="stSidebar"] .stMarkdown h4 {
+            color: #e0e0e0 !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown a {
+            color: #4fc3f7 !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown a:hover {
+            color: #90caf9 !important;
+        }
+        section[data-testid="stSidebar"] .stSelectbox select {
+            background: #1a1a2e !important;
+            color: #e0e0e0 !important;
+            border-color: rgba(255,255,255,0.1) !important;
+        }
+        section[data-testid="stSidebar"] .stSelectbox option {
+            background: #1a1a2e !important;
+            color: #e0e0e0 !important;
+        }
+        section[data-testid="stSidebar"] .stToggle {
+            color: #e0e0e0 !important;
+        }
+
+        /* Fix scrollbar in dark mode */
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e !important;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1976D2 !important;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0D47A1 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 else:
@@ -513,8 +562,10 @@ with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Select all symptoms that apply:")
 
+    # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
 
+    # Filter symptoms
     if search_term:
         filtered_features = [s for s in features if search_term.lower() in s.lower()]
     else:
@@ -522,6 +573,7 @@ with tab2:
 
     st.caption(f"Showing {len(filtered_features)} of {len(features)} symptoms")
 
+    # Categories
     categories = {
         "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
         "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
@@ -533,6 +585,7 @@ with tab2:
 
     selected = []
 
+    # Show symptoms
     if search_term:
         cols = st.columns(4)
         for i, sym in enumerate(filtered_features):
@@ -550,16 +603,19 @@ with tab2:
                     if col.checkbox(sym.replace('_', ' ').title(), key=f"cat_{sym}"):
                         selected.append(sym)
 
+    # Selected tags
     if selected:
         st.markdown("#### 📋 Selected Symptoms:")
         tags = "".join([f'<span class="symptom-tag">✅ {s.replace("_", " ").title()}</span>' for s in selected])
         st.markdown(tags, unsafe_allow_html=True)
 
+    # Predict button
     if st.button("🔍 Predict Disease", type="primary"):
         if not selected:
             st.warning("⚠️ Please select at least one symptom.")
         else:
             with st.spinner("🧠 Analyzing symptoms..."):
+                # Progress bar
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.005)
@@ -577,6 +633,7 @@ with tab2:
 
                 progress_bar.empty()
 
+                # ---------- RESULTS ----------
                 st.markdown("---")
                 st.markdown("## 📊 Diagnosis Result")
 
@@ -599,6 +656,7 @@ with tab2:
                     else:
                         st.markdown('<div class="risk-low">🟢 Low Risk - Take rest and stay hydrated</div>', unsafe_allow_html=True)
 
+                # Confidence Gauge
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=confidence,
@@ -622,10 +680,12 @@ with tab2:
                 fig.update_layout(height=250)
                 st.plotly_chart(fig, use_container_width=True)
 
+                # Emergency detection
                 emergency = ['chest_pain', 'shortness_breath', 'fainting', 'seizures']
                 if any(s in emergency for s in selected):
                     st.error("🚨 **Emergency symptoms detected!** Seek immediate medical attention.")
 
+                # Doctor recommendation
                 doctor_mapping = {
                     'Heart Attack': 'Cardiologist',
                     'Dengue': 'Infectious Disease Specialist',
@@ -641,13 +701,11 @@ with tab2:
                     'Hyperthyroidism': 'Endocrinologist',
                     'Hypertension': 'Cardiologist'
                 }
-
                 if disease in doctor_mapping:
                     st.info(f"👨‍⚕️ **Recommended Specialist:** {doctor_mapping[disease]}")
 
                 st.markdown("---")
                 st.markdown("### 💊 Recommendations")
-
                 rec_col1, rec_col2, rec_col3 = st.columns(3)
                 with rec_col1:
                     st.markdown("""
@@ -717,6 +775,7 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
                     mime="text/plain"
                 )
 
+                # Save history
                 st.session_state.history.append({
                     'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'symptoms': ', '.join(selected),
