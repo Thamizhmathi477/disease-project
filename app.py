@@ -539,14 +539,48 @@ with tab2:
     st.markdown("## 🩺 Disease Prediction")
     st.markdown("### Click a category below to expand and select symptoms:")
 
-    # Categories
+    # ---------- COMPLETE CATEGORY MAPPING ----------
     categories = {
-        "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
-        "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
-        "🤕 Pain": ["headache", "body_ache", "muscle_pain", "joint_pain", "back_pain"],
-        "💊 Digestive": ["nausea", "vomiting", "diarrhea", "abdominal_pain", "loss_appetite"],
-        "🧠 Neurological": ["dizziness", "confusion", "numbness", "tingling", "tremors"],
-        "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
+        "🌡️ General": [
+            "fever", "fatigue", "chills", "sweating", "weakness", "weight_loss",
+            "mild_fever", "high_fever", "lethargy", "malaise", "restlessness",
+            "fluid_overload", "weight_gain", "loss_of_appetite", "increased_appetite"
+        ],
+        
+        "🫁 Respiratory": [
+            "cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose",
+            "phlegm", "rusty_sputum", "sinus_pressure", "breathlessness",
+            "congestion", "wheezing", "coughing_blood", "nasal_congestion"
+        ],
+        
+        "🤕 Pain": [
+            "headache", "body_ache", "muscle_pain", "joint_pain", "back_pain",
+            "abdominal_pain", "pain_in_anal_region", "painful_walking",
+            "chest_pain", "cramps", "stomach_pain", "neck_pain"
+        ],
+        
+        "💊 Digestive": [
+            "nausea", "vomiting", "diarrhea", "abdominal_pain", "loss_appetite",
+            "constipation", "acidity", "passage_of_gases", "bloating",
+            "indigestion", "heartburn", "ulcer", "gastrointestinal_bleeding"
+        ],
+        
+        "🧠 Neurological": [
+            "dizziness", "confusion", "numbness", "tingling", "tremors",
+            "slurred_speech", "visual_disturbances", "spinning_movements",
+            "memory_loss", "seizures", "fainting", "headache", "migraine"
+        ],
+        
+        "🩸 Skin": [
+            "rash", "itching", "hives", "dry_skin", "jaundice",
+            "skin_rash", "nodal_skin_eruptions", "dischromic_patches",
+            "yellow_crust_ooze", "silver_like_dusting", "small_dents_in_nails",
+            "blister", "drying_and_tingling_lips", "yellow_urine",
+            "dark_urine", "foul_smell_of_urine", "burning_micturition",
+            "watering_from_eyes", "irritation_in_anus", "enlarged_thyroid",
+            "swelling_of_stomach", "muscle_wasting", "weakness_in_limbs",
+            "abnormal_menstruation", "depression", "toxic_look_typhos"
+        ]
     }
 
     # Add "Other" category for any remaining symptoms
