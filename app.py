@@ -533,7 +533,7 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION – WORKING SEARCH
+# TAB 2: DISEASE PREDICTION – ALL CATEGORIES ALWAYS VISIBLE
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
@@ -542,15 +542,14 @@ with tab2:
     # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
 
-    # Filter symptoms based on search
+    # Show count of matching symptoms
     if search_term:
-        filtered_features = [s for s in features if search_term.lower() in s.lower()]
-        st.caption(f"Showing {len(filtered_features)} matching symptoms out of {len(features)} total")
+        match_count = sum(1 for s in features if search_term.lower() in s.lower())
+        st.caption(f"🔍 {match_count} symptoms match your search (out of {len(features)} total)")
     else:
-        filtered_features = features
         st.caption(f"Showing all {len(features)} symptoms")
 
-    # Categories – only used when there's no search term
+    # Categories
     categories = {
         "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
         "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
@@ -560,46 +559,45 @@ with tab2:
         "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
     }
 
+    # Add "Other" category for symptoms not in any category
+    all_categorized = set()
+    for sym_list in categories.values():
+        all_categorized.update(sym_list)
+    remaining = [s for s in features if s not in all_categorized]
+    if remaining:
+        categories["🔸 Other"] = remaining
+
     selected = []
 
-    # Display symptoms
-    if search_term:
-        # When searching: show a flat list of matching symptoms (no categories)
+    # Display all categories and symptoms with highlight on search
+    for category, sym_list in categories.items():
+        # Only show categories that have symptoms in the dataset
+        available = [s for s in sym_list if s in features]
+        if not available:
+            continue
+        st.markdown(f"#### {category}")
         cols = st.columns(4)
-        for i, sym in enumerate(filtered_features):
+        for i, sym in enumerate(available):
             col = cols[i % 4]
-            # Highlight the matching part – bold and with a magnifying glass
             display_name = sym.replace('_', ' ').title()
-            if search_term.lower() in sym.lower():
-                # Find where the match occurs
+            # Check if this symptom matches the search
+            if search_term and search_term.lower() in sym.lower():
+                # Highlight the matching part
                 lower_sym = sym.lower()
                 lower_search = search_term.lower()
                 idx = lower_sym.find(lower_search)
                 if idx != -1:
-                    before = sym[:idx]
-                    match = sym[idx:idx+len(search_term)]
-                    after = sym[idx+len(search_term):]
-                    highlighted = f"🔍 {before.replace('_', ' ').title()}<span style='background-color: #FFEB3B; font-weight: bold; color: #0D47A1;'>{match.replace('_', ' ').title()}</span>{after.replace('_', ' ').title()}"
+                    before = sym[:idx].replace('_', ' ').title()
+                    match = sym[idx:idx+len(search_term)].replace('_', ' ').title()
+                    after = sym[idx+len(search_term):].replace('_', ' ').title()
+                    label = f"🔍 {before}<span style='background-color: #FFEB3B; font-weight: bold; color: #0D47A1;'>{match}</span>{after}"
                 else:
-                    highlighted = f"🔍 {display_name}"
-                # Use HTML for the checkbox label
-                if col.checkbox(highlighted, key=f"search_{sym}"):
+                    label = f"🔍 {display_name}"
+                if col.checkbox(label, key=f"cat_{sym}"):
                     selected.append(sym)
             else:
-                if col.checkbox(display_name, key=f"search_{sym}"):
+                if col.checkbox(display_name, key=f"cat_{sym}"):
                     selected.append(sym)
-    else:
-        # No search: show categories
-        for category, sym_list in categories.items():
-            category_symptoms = [s for s in sym_list if s in features]
-            if category_symptoms:
-                st.markdown(f"#### {category}")
-                cols = st.columns(4)
-                for i, sym in enumerate(category_symptoms):
-                    col = cols[i % 4]
-                    display_name = sym.replace('_', ' ').title()
-                    if col.checkbox(display_name, key=f"cat_{sym}"):
-                        selected.append(sym)
 
     # Show selected tags
     if selected:
