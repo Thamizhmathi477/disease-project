@@ -1,3 +1,4 @@
+%%writefile app.py
 import streamlit as st
 import joblib
 import numpy as np
@@ -533,7 +534,7 @@ with tab1:
     """)
 
 # ============================================
-# TAB 2: DISEASE PREDICTION (With Highlight on Search)
+# TAB 2: DISEASE PREDICTION – SHOW ALL SYMPTOMS
 # ============================================
 with tab2:
     st.markdown("## 🩺 Disease Prediction")
@@ -541,13 +542,11 @@ with tab2:
 
     # Search bar
     search_term = st.text_input("🔍 Search Symptoms", placeholder="Type symptom name...")
-
-    # Determine if we need to highlight
     highlight_matches = search_term != ""
 
     st.caption(f"Showing all {len(features)} symptoms" + (f" – matching symptoms marked with 🔍" if highlight_matches else ""))
 
-    # Categories
+    # Define categories (add any known symptom patterns)
     categories = {
         "🌡️ General": ["fever", "fatigue", "chills", "sweating", "weakness", "weight_loss"],
         "🫁 Respiratory": ["cough", "shortness_breath", "chest_pain", "sore_throat", "runny_nose"],
@@ -557,24 +556,41 @@ with tab2:
         "🩸 Skin": ["rash", "itching", "hives", "dry_skin", "jaundice"]
     }
 
+    # Flatten the category lists for quick lookup
+    category_symptom_set = set()
+    for sym_list in categories.values():
+        category_symptom_set.update(sym_list)
+
+    # Separate symptoms into categorized and uncategorized
+    categorized = {}
+    for cat, sym_list in categories.items():
+        cat_syms = [s for s in sym_list if s in features]
+        categorized[cat] = cat_syms
+
+    # Uncategorized are those in features but not in any category list
+    all_features_set = set(features)
+    categorized_set = set().union(*categorized.values())
+    uncategorized = list(all_features_set - categorized_set)
+    if uncategorized:
+        categorized["🔸 Other"] = uncategorized
+
     selected = []
 
-    # Build the display list
-    # If search term is not empty, we'll add a marker to matching symptoms
-    for category, sym_list in categories.items():
-        category_symptoms = [s for s in sym_list if s in features]
-        if category_symptoms:
-            st.markdown(f"#### {category}")
-            cols = st.columns(4)
-            for i, sym in enumerate(category_symptoms):
-                col = cols[i % 4]
-                # Prepare label
-                if highlight_matches and search_term.lower() in sym.lower():
-                    label = f"🔍 {sym.replace('_', ' ').title()}"
-                else:
-                    label = sym.replace('_', ' ').title()
-                if col.checkbox(label, key=f"cat_{sym}"):
-                    selected.append(sym)
+    # Display each category
+    for cat, sym_list in categorized.items():
+        if not sym_list:
+            continue
+        st.markdown(f"#### {cat}")
+        cols = st.columns(4)
+        for i, sym in enumerate(sym_list):
+            col = cols[i % 4]
+            # Determine label
+            if highlight_matches and search_term.lower() in sym.lower():
+                label = f"🔍 {sym.replace('_', ' ').title()}"
+            else:
+                label = sym.replace('_', ' ').title()
+            if col.checkbox(label, key=f"cat_{sym}"):
+                selected.append(sym)
 
     # Show selected tags
     if selected:
@@ -588,7 +604,6 @@ with tab2:
             st.warning("⚠️ Please select at least one symptom.")
         else:
             with st.spinner("🧠 Analyzing symptoms..."):
-                # Progress bar
                 progress_bar = st.progress(0)
                 for i in range(100):
                     time.sleep(0.005)
@@ -606,7 +621,6 @@ with tab2:
 
                 progress_bar.empty()
 
-                # ---------- RESULTS ----------
                 st.markdown("---")
                 st.markdown("## 📊 Diagnosis Result")
 
@@ -629,7 +643,6 @@ with tab2:
                     else:
                         st.markdown('<div class="risk-low">🟢 Low Risk - Take rest and stay hydrated</div>', unsafe_allow_html=True)
 
-                # Confidence Gauge
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=confidence,
@@ -653,12 +666,10 @@ with tab2:
                 fig.update_layout(height=250)
                 st.plotly_chart(fig, use_container_width=True)
 
-                # Emergency detection
                 emergency = ['chest_pain', 'shortness_breath', 'fainting', 'seizures']
                 if any(s in emergency for s in selected):
                     st.error("🚨 **Emergency symptoms detected!** Seek immediate medical attention.")
 
-                # Doctor recommendation
                 doctor_mapping = {
                     'Heart Attack': 'Cardiologist',
                     'Dengue': 'Infectious Disease Specialist',
@@ -748,7 +759,6 @@ Risk Level: {'High' if confidence > 80 else 'Medium' if confidence > 60 else 'Lo
                     mime="text/plain"
                 )
 
-                # Save history
                 st.session_state.history.append({
                     'date': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'symptoms': ', '.join(selected),
